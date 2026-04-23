@@ -77,15 +77,15 @@ def _solve_inner_npg(policy, rollout_fn, grad_f, gamma, H, B2, N_inner, beta):
     Returns (omega as numpy (d,), trajectories consumed).
     """
     d = policy.d
-    omega = torch.zeros(d, device=policy.device, dtype=policy.dtype)
+    omega = torch.zeros(d, device=policy.device, dtype=policy.dtype) #Line 7
     total_traj = 0
-    for _ in range(N_inner):
-        states, actions, rewards = rollout_fn(H, B2)
-        total_traj += B2
-        g_hat = _pg_direction(policy, states, actions, rewards, gamma, grad_f)
-        scores = policy.scores(states, actions)
-        F_hat = _empirical_fisher(scores, gamma)
-        omega = omega - beta * (F_hat @ omega - g_hat)
+    for _ in range(N_inner): #Line 8
+        states, actions, rewards = rollout_fn(H, B2) #Line 9
+        total_traj += B2 #Reporting only
+        g_hat = _pg_direction(policy, states, actions, rewards, gamma, grad_f) #Line 10
+        scores = policy.scores(states, actions) #psi_{i,t}, shape (B2, H, d)
+        F_hat = _empirical_fisher(scores, gamma) #Line 11
+        omega = omega - beta * (F_hat @ omega - g_hat) #Line 12
     return omega.detach().cpu().numpy(), total_traj
 
 
@@ -152,30 +152,48 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
     sampling J_{H, 2^{Q-1}} independently would make the estimator unbiased but
     blow up the variance (the telescoping argument breaks).
     """
+    # Line 3
+    Q = int(rng.geometric(0.5)) # Q in {1, 2, ...}, P(Q = q) = 2^{-q}
+    # End Line 3
+    # Line 4
     Q_max = int(np.floor(np.log2(B_max)))
-    Q = int(rng.geometric(0.5))  # Q in {1, 2, ...}, P(Q = q) = 2^{-q}
     if Q > Q_max:
         Q_bar = 0
         B_k = 1
     else:
         Q_bar = Q
         B_k = 2 ** Q_bar
-
+    # End Line 4
+    # Line 5
     _, _, rr = rollout_fn(H, B_k)
     J_samples = _discounted_returns(rr, gamma)  # (B_k, M)
-    J_H1 = J_samples[0]
+    # End Line 5
+    # Line 6: Compute ∂_m f(Ĵ_{H,MLMC}) using eq. (17)
+    # ∂_m f(Ĵ_{H,MLMC}) = ∂_m f(Ĵ_{H,1}) + 1{2^Q ≤ B_max} · 2^Q · [∂_m f(Ĵ_{H,2^Q}) − ∂_m f(Ĵ_{H,2^{Q-1}})]
+    J_H1 = J_samples[0]                          # Ĵ_{H,1} — single-trajectory return
 
-    if Q_bar == 0:
-        grad_f = obj.grad(J_H1)
+    if Q_bar == 0:                                # 1{2^Q ≤ B_max} = 0, correction term vanishes
+        grad_f = obj.grad(J_H1)                   # = ∂_m f(Ĵ_{H,1})
         J_report = J_H1
-    else:
-        J_full = J_samples.mean(axis=0)
-        J_half = J_samples[: B_k // 2].mean(axis=0)  # nested coupling
+    else:                                         # 1{2^Q ≤ B_max} = 1
+        J_full = J_samples.mean(axis=0)           # Ĵ_{H,2^Q}
+        J_half = J_samples[: B_k // 2].mean(axis=0)  # Ĵ_{H,2^{Q-1}} (nested coupling)
+        # ∂f(Ĵ_{H,1})  +  2^Q · [∂f(Ĵ_{H,2^Q}) − ∂f(Ĵ_{H,2^{Q-1}})]
         grad_f = obj.grad(J_H1) + (2 ** Q_bar) * (obj.grad(J_full) - obj.grad(J_half))
         J_report = J_full
-
+    # End Line 6
+    # Lines 7-14: Inner NPG loop (solved in _solve_inner_npg)
+    # Line 7:  ω_0 = 0
+    # Line 8:  for n = 0, ..., N-1
+    # Line 9:    Sample B trajectories
+    # Line 10:   ĝ = (1/B) Σ g(τ, Ĵ_{H,MLMC} | θ_k)
+    # Line 11:   F̂ = (1/B) Σ Σ_t γ^t ψ_t ψ_t⊤
+    # Line 12:   ω_{n+1} = ω_n − β(F̂ ω_n − ĝ)
+    # Line 13: end for
+    # Line 14: ω_k = ω_N
     omega, inner_traj = _solve_inner_npg(policy, rollout_fn, grad_f, gamma, H,
                                          B_inner, N_inner, beta)
+    # Line 15: θ_{k+1} = θ_k + α·ω_k  (applied by caller)
     return omega, J_report, B_k + inner_traj
 
 
