@@ -250,7 +250,12 @@ class NNPolicy(Policy):
             flat_scores = torch.cat(
                 [per_sample_grads[n].reshape(N_flat, -1) for n in self._names], dim=1
             )
-        except RuntimeError:
+        except RuntimeError as _e:
+            if not getattr(self, "_warned_vmap", False):
+                import sys
+                print(f"[NNPolicy] vmap failed, using per-sample autograd loop: {_e}",
+                      file=sys.stderr)
+                self._warned_vmap = True
             # Slow fallback: per-sample autograd loop.
             for p in self.net.parameters():
                 p.requires_grad_(True)

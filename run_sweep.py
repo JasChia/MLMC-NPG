@@ -36,11 +36,13 @@ def run_one(cfg: dict) -> dict:
 
     np.random.seed(cfg["seed"])
     torch.manual_seed(cfg["seed"])
-    torch.set_num_threads(1)  # avoid thread contention across workers
+    if cfg.get("device", "cpu") == "cpu":
+        torch.set_num_threads(1)  # avoid thread contention across workers
 
     env_config = {"M": cfg["M"], "L_max": cfg["L_max"],
                   "lambdas": ARRIVAL_RATES[cfg["M"]]}
-    policy = make_policy(cfg["policy"], M=cfg["M"], L_max=cfg["L_max"], device="cpu")
+    policy = make_policy(cfg["policy"], M=cfg["M"], L_max=cfg["L_max"],
+                         device=cfg.get("device", "cpu"))
     obj = AlphaFairness(alpha=2.0, delta=cfg["delta"], H=cfg["H"])
     rng = np.random.default_rng(cfg["seed"])
 
@@ -115,6 +117,7 @@ def build_configs(args) -> List[Dict]:
                         "N_inner": args.N_inner,
                         "beta": args.beta,
                         "B_max": args.B_max,
+                        "device": args.device,
                         "out_dir": args.out_dir,
                     })
     return configs
@@ -139,10 +142,25 @@ def main():
     p.add_argument("--B_max", type=int, default=256)
     p.add_argument("--include_ganesh", action="store_true")
     p.add_argument("--only_ganesh", action="store_true")
+    p.add_argument("--device", default="cpu", choices=["cpu", "cuda"])
+    p.add_argument("--skip_existing", action="store_true",
+                   help="skip configs whose output JSON already exists")
     p.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     args = p.parse_args()
 
     configs = build_configs(args)
+    if args.skip_existing:
+        out_dir = Path(args.out_dir)
+        kept = []
+        for cfg in configs:
+            out_file = out_dir / (
+                f"{cfg['algorithm']}_{cfg['policy']}_M{cfg['M']}_N{cfg['N']}_seed{cfg['seed']}.json"
+            )
+            if not out_file.exists():
+                kept.append(cfg)
+        print(f"--skip_existing: {len(configs) - len(kept)} runs already present, "
+              f"{len(kept)} to run")
+        configs = kept
     n_algos = (2 if args.only_ganesh else (2 + 2 * int(args.include_ganesh)))
     print(f"Sweep: {len(configs)} runs, {args.workers} workers")
     print(f"  algos x Ms x Ns x seeds = "

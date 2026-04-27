@@ -21,6 +21,10 @@ import numpy as np
 SMOOTH_WINDOW = 25  # moving-average window applied per run before mean/std
 
 COLOR_BY_N = {4: "tab:red", 16: "tab:orange", 64: "tab:green", 256: "tab:blue"}
+COLOR_BY_POLICY = {"log_linear": "tab:blue", "tabular": "tab:orange", "nn": "tab:green"}
+LABEL_BY_POLICY = {"log_linear": "Log-linear softmax",
+                   "tabular": "Tabular softmax",
+                   "nn": "NN (MLP 64×64)"}
 COLOR_BY_ALGO = {
     "bai_pg": "tab:blue",
     "reinforce": "tab:red",
@@ -36,7 +40,7 @@ LABEL_BY_ALGO = {
 
 
 def load_runs(sweep_dir: Path):
-    """Return list of (config_dict, history_dict) pairs."""
+    """Return list of history dicts (each embeds the run config)."""
     runs = []
     for p in sorted(sweep_dir.glob("*.json")):
         if p.name == "sweep_manifest.json":
@@ -44,6 +48,14 @@ def load_runs(sweep_dir: Path):
         with open(p) as f:
             h = json.load(f)
         runs.append(h)
+    return runs
+
+
+def load_runs_from_dirs(sweep_dirs: list[Path]):
+    """Load runs from multiple directories (for cross-policy comparison plots)."""
+    runs = []
+    for d in sweep_dirs:
+        runs.extend(load_runs(Path(d)))
     return runs
 
 
@@ -202,25 +214,84 @@ def plot_fig3_all_algos(runs, M, N, out_dir: Path):
     plt.close(fig)
 
 
+def plot_fig4_policy_comparison(runs, M, N, algorithm, out_dir: Path):
+    """Figure 4: same algorithm, different policy classes, at fixed (M, N).
+
+    Overlays log_linear / tabular / nn runs to show how policy-class choice
+    interacts with the algorithm.
+    """
+    fig, ax = plt.subplots(figsize=(7, 4.5))
+    plotted_any = False
+    all_f_values = []
+    for policy in ["log_linear", "tabular", "nn"]:
+        matched = [r for r in runs
+                   if r["config"]["algorithm"] == algorithm
+                   and r["config"]["policy"] == policy
+                   and r["config"]["M"] == M and r["config"]["N"] == N]
+        if not matched:
+            continue
+        plotted_any = True
+        d_val = matched[0]["config"].get("d", None)
+        # Not always present in config; infer from the policy if absent.
+        label = LABEL_BY_POLICY.get(policy, policy)
+        if d_val is not None:
+            label = f"{label} (d={d_val})"
+        x, mean, std = _mean_std_vs_iter(matched, smooth_window=SMOOTH_WINDOW)
+        color = COLOR_BY_POLICY.get(policy)
+        ax.plot(x, mean, label=label, color=color)
+        ax.fill_between(x, mean - std, mean + std, color=color, alpha=0.15)
+        all_f_values.append(mean)
+    if not plotted_any:
+        plt.close(fig)
+        return
+    if all_f_values:
+        flat = np.concatenate(all_f_values)
+        lo, hi = np.percentile(flat, [2, 98])
+        pad = 0.1 * (hi - lo + 1e-9)
+        ax.set_ylim(lo - pad, hi + pad)
+    ax.set_xlabel("Outer iteration $k$")
+    ax.set_ylabel(r"$f(\hat J^{\pi_k})$")
+    ax.set_title(f"Policy-class comparison: {LABEL_BY_ALGO[algorithm]}, M={M}, N={N}")
+    ax.legend(loc="lower right", frameon=False)
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    fig.savefig(out_dir / f"fig4_policy_M{M}_N{N}_{algorithm}.png", dpi=150)
+    plt.close(fig)
+
+
 def main():
     p = argparse.ArgumentParser()
-    p.add_argument("--sweep_dir", default="results/sweep")
+    p.add_argument("--sweep_dir", default=None,
+                   help="single sweep directory (legacy; use --sweep_dirs for multi)")
+    p.add_argument("--sweep_dirs", nargs="+", default=None,
+                   help="multiple sweep directories to load runs from")
     p.add_argument("--out_dir", default="figures")
     p.add_argument("--Ms", type=int, nargs="+", default=[2, 4, 8])
     p.add_argument("--fig3_N", type=int, default=64)
+    p.add_argument("--fig4_algos", nargs="+", default=["bai_pg"],
+                   help="algorithms to overlay for the policy-comparison plot")
+    p.add_argument("--fig4_Ns", type=int, nargs="+", default=[64])
+    p.add_argument("--policy_filter", default=None,
+                   help="restrict plotted runs to a single policy (log_linear/tabular/nn)")
     args = p.parse_args()
 
-    sweep_dir = Path(args.sweep_dir)
+    assert args.sweep_dir or args.sweep_dirs, "provide --sweep_dir or --sweep_dirs"
+    dirs = [args.sweep_dir] if args.sweep_dir else args.sweep_dirs
+    runs = load_runs_from_dirs([Path(d) for d in dirs])
+    if args.policy_filter:
+        runs = [r for r in runs if r["config"].get("policy") == args.policy_filter]
     out_dir = Path(args.out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
-
-    runs = load_runs(sweep_dir)
-    print(f"Loaded {len(runs)} runs from {sweep_dir}")
+    print(f"Loaded {len(runs)} runs from {dirs}"
+          f"{' (filter=' + args.policy_filter + ')' if args.policy_filter else ''}")
 
     for M in args.Ms:
         plot_fig1(runs, M, out_dir)
         plot_fig2(runs, M, out_dir)
         plot_fig3_all_algos(runs, M, args.fig3_N, out_dir)
+        for N in args.fig4_Ns:
+            for algo in args.fig4_algos:
+                plot_fig4_policy_comparison(runs, M, N, algo, out_dir)
     print(f"Figures written to {out_dir}")
 
 
