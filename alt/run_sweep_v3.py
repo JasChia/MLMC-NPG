@@ -28,7 +28,7 @@ def run_one(cfg: dict) -> dict:
     from src.policy import make_policy as _src_make_policy
     from src.train import train
     from alt.train_v2 import train_v2
-    from alt.envs_v2 import batch_rollout_v2, ARRIVAL_RATES
+    from alt.envs_v2 import batch_rollout_v2, ARRIVAL_RATES, ARRIVAL_RATES_CHALLENGING
     from alt.objectives_v2 import GeneralAlphaFairness, MinFairness
 
     np.random.seed(cfg["seed"])
@@ -36,8 +36,12 @@ def run_one(cfg: dict) -> dict:
     if cfg.get("device", "cpu") == "cpu":
         torch.set_num_threads(1)
 
-    env_config = {"M": cfg["M"], "L_max": cfg["L_max"],
-                  "lambdas": ARRIVAL_RATES[cfg["M"]]}
+    arrivals_kind = cfg.get("arrivals", "standard")
+    if arrivals_kind == "challenging":
+        lambdas = ARRIVAL_RATES_CHALLENGING[cfg["M"]]
+    else:
+        lambdas = ARRIVAL_RATES[cfg["M"]]
+    env_config = {"M": cfg["M"], "L_max": cfg["L_max"], "lambdas": lambdas}
     if cfg["policy"] == "nn":
         # Use compat NN policy (per-sample autograd loop) on torch < 2.0.
         from alt.policy_nn_compat import NNPolicyCompat
@@ -128,6 +132,7 @@ def build_configs(args) -> List[Dict]:
                             "delta_reinforce": args.delta_reinforce,
                             "grad_clip": args.grad_clip,
                             "objective": args.objective,
+                            "arrivals": args.arrivals,
                             "out_dir": args.out_dir,
                         })
     return configs
@@ -161,6 +166,8 @@ def main():
                    help="L2-norm clip on ascent direction ω before Adam. None = no clip.")
     p.add_argument("--objective", default="alpha", choices=["alpha", "minfair"],
                    help="alpha = α-fairness; minfair = max-min (Lipschitz, non-2nd-order-smooth).")
+    p.add_argument("--arrivals", default="standard", choices=["standard", "challenging"],
+                   help="standard = Sigma=0.5 lambdas; challenging = Sigma=0.8 (heavier load).")
     p.add_argument("--workers", type=int, default=max(1, (os.cpu_count() or 2) - 2))
     p.add_argument("--skip_existing", action="store_true")
     args = p.parse_args()

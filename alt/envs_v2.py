@@ -34,6 +34,22 @@ ARRIVAL_RATES[16] = np.array([(m + 0.5) / 256.0 for m in range(16)], dtype=np.fl
 # M=32: lambdas in [0.000488, 0.0308], sum = 0.5 (stable). lambda_min is 25.6x smaller
 # than M=8's, giving a much larger curvature gap between the smallest and largest queue.
 ARRIVAL_RATES[32] = np.array([(m + 0.5) / 1024.0 for m in range(32)], dtype=np.float64)
+# M=64: lambdas in [0.000122, 0.0155], sum = 0.5 (stable). Pattern matches the
+# (m + 0.5) / (M^2 / 2) form for symmetry with M=8/16/32. lambda_min = 1.22e-4
+# is 102x smaller than M=8's, putting MLMC's bias-correction signal at maximum.
+ARRIVAL_RATES[64] = np.array([(m + 0.5) / 4096.0 for m in range(64)], dtype=np.float64)
+
+
+# Challenging-load arrival rates: same shape but Sum(lambda) = 0.8 instead of 0.5.
+# Higher load -> queue lengths grow much faster, transient is much longer, and the
+# arrival-limited optimum sits closer to instability. Plug-in J estimates have
+# fatter tails and the per-queue bias is amplified.  All still strictly stable.
+ARRIVAL_RATES_CHALLENGING = {}
+for _M in (8, 16, 32, 64):
+    _raw = np.array([(m + 0.5) / (_M * _M / 2.0) for m in range(_M)], dtype=np.float64)
+    # Scale so Sum = 0.8 (vs 0.5 for the standard set).
+    _raw = _raw * (0.8 / _raw.sum())
+    ARRIVAL_RATES_CHALLENGING[_M] = _raw
 
 
 QInit = Union[None, int, np.ndarray, str, Callable]
