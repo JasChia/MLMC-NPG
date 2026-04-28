@@ -1,0 +1,17 @@
+{
+  "args": {
+    "out_dir": "results/sweep_v11_round_a",
+    "config_csv": "alt/configs/v11_round_a.csv",
+    "seeds": 3,
+    "gamma": 0.99,
+    "lr": 0.05,
+    "delta": 0.5,
+    "N_inner": 5,
+    "beta": 0.05,
+    "B_max": 64,
+    "delta_reinforce": 1.0,
+    "workers": 3,
+    "skip_existing": true
+  },
+  "n": 15
+}

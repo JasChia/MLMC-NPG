@@ -882,6 +882,77 @@ results/sweep_v10_fair_M64_chl/          — M=64 chl arrivals fair-budget moreK
 results/sweep_v10_fair_M64_chl_largerN/  — M=64 chl arrivals fair-budget largerN
 ```
 
+## 16. Section v11 — fair-budget episodic sweep, original DST, and Fruit Tree d-scale
+
+Section 16 runs the fair-budget comparison requested after §15 across the episodic sparse-reward environments, now including the newly added **true original 11×10 Deep Sea Treasure with seafloor**. The comparison is deliberately strict: MLMC-NPG runs at base N=4, K=300, B_max=64, N_inner=5, beta=0.05; Bai-PG and REINFORCE each get two matched-budget controls:
+
+- **moreK**: same N=4, more iterations (Bai K=1000, REINFORCE K=2000), about 8000 trajectories.
+- **largerN**: same K=300, larger batch (Bai N=13, REINFORCE N=26), about 7800 trajectories.
+
+The uniform MLMC hyperparameters are the locked choices from the v11 tuning pass: **B_max=64, beta=0.05**. Across Fruit Tree, custom DST, and Bonus World, B_max in {32, 64, 128} and beta in {0.01, 0.05, 0.10} moved plateaus by less than about 0.05 absolute units at K=200, so the uniform choice is a stability/convention decision rather than a cherry-picked per-env optimum.
+
+Implementation note for the NN d-scale: `src/algorithms.py` remains untouched. For NN-128 only, the original `d x d` empirical Fisher materialization was infeasible (d=33154 gives a multi-GB Fisher per worker), so I added `alt/algorithms_lowrank.py` / `alt/train_lowrank.py`, which computes the exact same product `F_hat @ omega = X.T @ (X @ omega) / B` without forming `F_hat`. A float32 equivalence check gave max absolute error about 1e-6. This is an implementation optimization, not an algorithm change.
+
+### 16.1 Round A: five episodic tabular envs
+
+Results in [results/sweep_v11_round_a/](results/sweep_v11_round_a/), summaries in [results/v11_summaries/round_a_plateaus.csv](results/v11_summaries/round_a_plateaus.csv), plots in [figures/v11_fair_budget/round_a/](figures/v11_fair_budget/round_a/) plus the margin summary [figures/v11_fair_budget/round_a_summary.png](figures/v11_fair_budget/round_a_summary.png). Plateau = per-seed mean over the last K/10 iterations, then mean ± std across 3 seeds.
+
+| Env | MLMC-NPG | Bai-PG moreK | Bai-PG largerN | REINFORCE moreK | REINFORCE largerN | Winner |
+|---|---:|---:|---:|---:|---:|---|
+| Custom DST 10×5 | 8.62 ± 0.23 | 8.94 ± 0.82 | **11.04 ± 1.89** | 4.02 ± 0.00 | 4.02 ± 0.00 | Bai largerN |
+| Original DST 11×10 | 22.96 ± 0.15 | 22.87 ± 0.94 | **23.23 ± 0.14** | 11.38 ± 0.00 | 11.38 ± 0.00 | Bai largerN |
+| Larger DST 20×10 | **15.27 ± 1.40** | 13.60 ± 3.22 | 13.51 ± 1.62 | 6.80 ± 0.00 | 6.80 ± 0.00 | MLMC |
+| Fruit Tree tabular | **16.78 ± 0.30** | 16.59 ± 0.62 | 16.50 ± 0.34 | 15.90 ± 0.62 | 15.87 ± 0.20 | MLMC |
+| Bonus World | 8.52 ± 0.04 | **8.57 ± 0.02** | 8.51 ± 0.00 | 4.73 ± 0.00 | 4.73 ± 0.00 | Bai moreK |
+
+**Canonical fair-budget answer for sparse episodic envs:** MLMC's win survives fair-budget only when the sparse-reward task is hard enough that Bai's plug-in bias cannot be repaired by simply spending the same trajectories in a larger batch. Larger DST is the clean positive case: MLMC keeps a +1.67 margin over the best Bai fair-budget control. Fruit Tree tabular also favors MLMC, but only by +0.20. Custom DST and original DST do **not** survive the larger-batch control: Bai-PG with N=13 beats MLMC at the same trajectory budget. Bonus World is also a Bai-PG win.
+
+Original DST is therefore a valuable correction to the earlier DST story. MLMC is stable and beats Bai-moreK by a small +0.09, but it does **not** beat Bai-largerN. The larger 11×10 map plus seafloor still creates sparse exploration, but at this horizon/objective scale, spending MLMC's per-iteration cost on Bai's N=13 batch is enough to remove the bias/variance issue.
+
+REINFORCE remains a diagnostic baseline rather than a competitor on DST-like objectives: it collapses to the no-useful-treasure baseline on every DST variant because eq. 38 is α=2 queueing-specific and interacts badly with sparse/negative reward channels. The Round A run emitted divide-by-zero warnings from the paper-faithful proxy; those are expected in these environments and are part of the reported failure mode.
+
+### 16.2 Round B: Fruit Tree d-scale
+
+Results in [results/sweep_v11_round_b/](results/sweep_v11_round_b/), summaries in [results/v11_summaries/round_b_plateaus.csv](results/v11_summaries/round_b_plateaus.csv), per-policy plots in [figures/v11_fair_budget/round_b/](figures/v11_fair_budget/round_b/), and the d-scale summary in [figures/v11_fair_budget/fruit_tree_dscale.png](figures/v11_fair_budget/fruit_tree_dscale.png). Dimensions are from the actual policy code: tabular d=512, NN-32 d=8290, NN-128 d=33154.
+
+| Policy | d | MLMC-NPG | Best Bai-PG fair-budget | Best REINFORCE fair-budget | MLMC margin vs Bai |
+|---|---:|---:|---:|---:|---:|
+| Tabular | 512 | **16.78 ± 0.30** | 16.59 ± 0.62 | 15.90 ± 0.62 | +0.20 |
+| NN-32 | 8290 | **16.72 ± 0.33** | 16.28 ± 0.05 | 15.80 ± 0.73 | +0.44 |
+| NN-128 | 33154 | 15.72 ± 0.35 | **16.25 ± 0.17** | 14.22 ± 1.03 | −0.53 |
+
+The d-scale result is **not monotone in MLMC's favor**. Moving from tabular to NN-32 increases MLMC's fair-budget margin over Bai-PG (+0.20 → +0.44), consistent with the earlier high-d story. But at NN-128 the comparison reverses: Bai-PG largerN wins by +0.53. This is not a REINFORCE rescue; REINFORCE remains worse than both PG methods. The practical read is that Fruit Tree at fixed K=300/N=4 has a capacity sweet spot: NN-32 is large enough for MLMC's Fisher-preconditioned unbiased direction to help, while NN-128 is large enough that optimization noise and redundant parameterization dominate the fixed sample budget.
+
+### 16.3 Updated recommendation
+
+The v11 fair-budget sweep narrows the MLMC recommendation further:
+
+- **Strong MLMC regime:** Larger sparse episodic maps where Bai-PG's plug-in bias persists even under matched samples, e.g. Larger DST 20×10 at d=804.
+- **Conditional MLMC regime:** Fruit Tree-like sparse rewards at moderate d, especially NN-32; the margin exists but is modest.
+- **Use Bai-PG largerN:** Original DST 11×10, custom DST 10×5, Bonus World, and overwide Fruit Tree NN-128. At the same sample budget, larger per-iteration batches can beat MLMC's bias correction.
+- **REINFORCE:** still useful as a failure-mode baseline, but not competitive on these sparse episodic objectives.
+
+### 16.4 Files added in §16
+
+```
+alt/envs_dst_original.py          — true original 11x10 DST with seafloor
+alt/run_v11.py                    — unified v11 runner, now with dst_original and low-rank NN Ganesh dispatch
+alt/configs/v11_round_a.csv       — Round A config, now 5 envs including dst_original
+alt/configs/v11_round_b.csv       — Round B Fruit Tree d-scale config
+alt/algorithms_lowrank.py         — exact low-rank Fisher-vector product for high-d NPG/MLMC
+alt/train_lowrank.py              — training loop dispatching Ganesh algorithms to low-rank products
+alt/plot_v11_fair_budget.py       — v11 plots and plateau CSV summaries
+
+results/sweep_v11_round_a/        — 75 runs + manifest
+results/sweep_v11_round_b/        — 30 runs + manifest
+results/v11_summaries/            — plateau CSV tables
+
+figures/v11_fair_budget/round_a/  — per-env fair-budget plots
+figures/v11_fair_budget/round_b/  — Fruit Tree NN fair-budget plots
+figures/v11_fair_budget/round_a_summary.png
+figures/v11_fair_budget/fruit_tree_dscale.png
+```
+
 ## 13. Files added in `alt/` (src/ unchanged)
 
 ```

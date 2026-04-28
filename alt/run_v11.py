@@ -91,14 +91,23 @@ def _make_env_and_policy(cfg, rng):
 
 
 def run_one(cfg):
-    from src.train import train
-
     np.random.seed(cfg["seed"])
     torch.manual_seed(cfg["seed"])
     torch.set_num_threads(1)
 
     rng = np.random.default_rng(cfg["seed"])
     policy, obj, H, rollout_fn = _make_env_and_policy(cfg, rng)
+    use_lowrank_npg = (
+        cfg.get("policy") == "nn"
+        and cfg["algorithm"] in {"ganesh_npg", "ganesh_mlmc"}
+        and policy.d >= cfg.get("lowrank_min_d", 10_000)
+    )
+    if use_lowrank_npg:
+        from alt.train_lowrank import train
+        cfg["lowrank_npg"] = True
+    else:
+        from src.train import train
+        cfg["lowrank_npg"] = False
 
     N = cfg["N"]
     if cfg["algorithm"] == "bai_pg":
