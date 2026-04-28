@@ -1,0 +1,4 @@
+# Hyperparam tuning: B_max + beta on Fruit Tree + DST tabular at N=4 K=200
+# Format: env, policy, hidden, algo, N, K, mode
+fruit_tree, tabular, , ganesh_mlmc, 4, 200, ref
+dst, tabular, , ganesh_mlmc, 4, 200, ref

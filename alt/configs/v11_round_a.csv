@@ -1,0 +1,31 @@
+# Round A: Cross-env tabular fair-budget at N=4 base
+# 4 envs (DST, Larger DST, Fruit Tree, Bonus World) x 5 configs (MLMC ref + Bai/REINFORCE moreK + largerN)
+# MLMC at N=4 burns ~26 traj/iter (= 6 outer + 5*4 inner). At K=300, total = 7800 trajs.
+# - Bai-PG moreK: K=1000 at N=4 -> 8000 trajs
+# - Bai-PG largerN: N=13 at K=300 -> 7800 trajs
+# - REINFORCE moreK: K=2000 at N=4 -> 8000 trajs
+# - REINFORCE largerN: N=26 at K=300 -> 7800 trajs
+
+dst,         tabular, , ganesh_mlmc, 4, 300,  ref
+dst,         tabular, , bai_pg,      4, 1000, moreK
+dst,         tabular, , bai_pg,     13, 300,  largerN
+dst,         tabular, , reinforce,   4, 2000, moreK
+dst,         tabular, , reinforce,  26, 300,  largerN
+
+dst_large,   tabular, , ganesh_mlmc, 4, 300,  ref
+dst_large,   tabular, , bai_pg,      4, 1000, moreK
+dst_large,   tabular, , bai_pg,     13, 300,  largerN
+dst_large,   tabular, , reinforce,   4, 2000, moreK
+dst_large,   tabular, , reinforce,  26, 300,  largerN
+
+fruit_tree,  tabular, , ganesh_mlmc, 4, 300,  ref
+fruit_tree,  tabular, , bai_pg,      4, 1000, moreK
+fruit_tree,  tabular, , bai_pg,     13, 300,  largerN
+fruit_tree,  tabular, , reinforce,   4, 2000, moreK
+fruit_tree,  tabular, , reinforce,  26, 300,  largerN
+
+bonus_world, tabular, , ganesh_mlmc, 4, 300,  ref
+bonus_world, tabular, , bai_pg,      4, 1000, moreK
+bonus_world, tabular, , bai_pg,     13, 300,  largerN
+bonus_world, tabular, , reinforce,   4, 2000, moreK
+bonus_world, tabular, , reinforce,  26, 300,  largerN
