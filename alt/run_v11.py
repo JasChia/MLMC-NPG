@@ -48,10 +48,11 @@ def _make_env_and_policy(cfg, rng):
         ns, na = NUM_STATES, NUM_ACTIONS
         rollout_fn_factory = lambda policy: (lambda H, B:
             original_dst_batch_rollout({}, policy, H, B, rng))
-    elif env_kind == "fruit_tree":
+    elif env_kind in ("fruit_tree", "fruit_tree_scaled"):
         from alt.envs_fruit_tree import (FruitTreeEnv, FruitTreeObj,
                                           fruit_tree_batch_rollout)
-        env = FruitTreeEnv(depth=cfg.get("depth", 7), seed=42)
+        env = FruitTreeEnv(depth=cfg.get("depth", 7), seed=42,
+                           minmax_scale=(env_kind == "fruit_tree_scaled"))
         obj = FruitTreeObj(delta=cfg["delta"])
         H = env.depth
         ns, na = env.num_states, env.num_actions

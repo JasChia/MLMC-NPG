@@ -1,0 +1,22 @@
+# v11 selected gamma sensitivity: compare to existing gamma=0.99 v11 runs.
+# Same fair-budget layout as Round A/B:
+# MLMC N=4,K=300; Bai moreK N=4,K=1000; Bai largerN N=13,K=300;
+# REINFORCE moreK N=4,K=2000; REINFORCE largerN N=26,K=300.
+
+resource,    tabular, ,  ganesh_mlmc, 4, 300,  ref
+resource,    tabular, ,  bai_pg,      4, 1000, moreK
+resource,    tabular, ,  bai_pg,     13, 300,  largerN
+resource,    tabular, ,  reinforce,   4, 2000, moreK
+resource,    tabular, ,  reinforce,  26, 300,  largerN
+
+bonus_world, tabular, ,  ganesh_mlmc, 4, 300,  ref
+bonus_world, tabular, ,  bai_pg,      4, 1000, moreK
+bonus_world, tabular, ,  bai_pg,     13, 300,  largerN
+bonus_world, tabular, ,  reinforce,   4, 2000, moreK
+bonus_world, tabular, ,  reinforce,  26, 300,  largerN
+
+fruit_tree,  nn,      32, ganesh_mlmc, 4, 300,  ref
+fruit_tree,  nn,      32, bai_pg,      4, 1000, moreK
+fruit_tree,  nn,      32, bai_pg,     13, 300,  largerN
+fruit_tree,  nn,      32, reinforce,   4, 2000, moreK
+fruit_tree,  nn,      32, reinforce,  26, 300,  largerN

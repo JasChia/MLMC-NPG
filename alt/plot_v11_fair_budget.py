@@ -35,7 +35,9 @@ ENV_LABEL = {
     "dst": "DST 10x5",
     "dst_original": "Original DST 11x10",
     "dst_large": "Larger DST 20x10",
+    "resource": "Resource Gathering",
     "fruit_tree": "Fruit Tree",
+    "fruit_tree_scaled": "Fruit Tree scaled [0,1]",
     "bonus_world": "Bonus World",
 }
 
@@ -228,7 +230,7 @@ def best_row(rows: list[dict], env: str, policy: str, algos: set[str]) -> dict |
 
 
 def plot_round_a_summary(rows: list[dict], out: Path) -> None:
-    envs = ["dst", "dst_original", "dst_large", "fruit_tree", "bonus_world"]
+    envs = ["dst", "dst_original", "dst_large", "resource", "fruit_tree", "bonus_world"]
     lookup = row_lookup(rows)
     mlmc = [lookup[(e, "tab", "ganesh_mlmc", "ref")] for e in envs if (e, "tab", "ganesh_mlmc", "ref") in lookup]
 

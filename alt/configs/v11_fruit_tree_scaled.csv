@@ -1,0 +1,9 @@
+# Fruit Tree with per-nutrient min-max scaled leaf rewards in [0, 1].
+# Same fair-budget tabular configs as Round A.
+#
+# env, policy, hidden, algo, N, K, mode
+fruit_tree_scaled, tabular, , ganesh_mlmc, 4, 300,  ref
+fruit_tree_scaled, tabular, , bai_pg,      4, 1000, moreK
+fruit_tree_scaled, tabular, , bai_pg,     13, 300,  largerN
+fruit_tree_scaled, tabular, , reinforce,   4, 2000, moreK
+fruit_tree_scaled, tabular, , reinforce,  26, 300,  largerN

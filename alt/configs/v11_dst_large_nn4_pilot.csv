@@ -1,0 +1,10 @@
+# Pilot: Larger DST with a tiny NN-4 policy.
+# Parameter count is close to tabular (828 vs 804), so dense-Fisher NPG/MLMC
+# remains practical while still testing a neural policy class.
+#
+# env, policy, hidden, algo, N, K, mode
+dst_large, nn, 4, ganesh_mlmc, 4, 50, ref
+dst_large, nn, 4, bai_pg,      4, 150, moreK
+dst_large, nn, 4, bai_pg,     13, 50,  largerN
+dst_large, nn, 4, reinforce,   4, 300, moreK
+dst_large, nn, 4, reinforce,  26, 50,  largerN

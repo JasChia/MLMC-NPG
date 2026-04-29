@@ -201,7 +201,8 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
 # REINFORCE baseline — Paper A eq. (38)
 # -----------------------------------------------------------------------------
 
-def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=1e-3):
+def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=1e-3,
+                   reward_transform=None):
     """REINFORCE with the per-step training reward from Paper A eq. (38):
 
         r_train(t) = - sum_m  t / ( sum_{tau=1}^{t} gamma^{tau-1} r_{m,tau} )
@@ -217,10 +218,11 @@ def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=
         reward yet.
     """
     ss, aa, rr = rollout_fn(H, N)  # (N, H, M)
-    H_len = rr.shape[1]
+    rr_train = reward_transform(rr) if reward_transform is not None else rr
+    H_len = rr_train.shape[1]
     gammas = gamma ** np.arange(H_len)  # (H,)
     # cum_disc[b, t, m] = sum_{tau=0}^{t} gamma^tau r[b, tau, m]
-    discounted = rr * gammas[None, :, None]
+    discounted = rr_train * gammas[None, :, None]
     cum_disc = np.cumsum(discounted, axis=1)
 
     # Paper's numerator t (1-indexed) == (t+1) in 0-indexed.

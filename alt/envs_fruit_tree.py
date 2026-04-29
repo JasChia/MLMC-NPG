@@ -29,7 +29,8 @@ M_REWARD = 6
 DEFAULT_DEPTH = 7
 
 
-def _generate_leaf_values(depth: int, seed: int = 42) -> np.ndarray:
+def _generate_leaf_values(depth: int, seed: int = 42,
+                          minmax_scale: bool = False) -> np.ndarray:
     """Deterministic leaf-vector construction.
 
     Each leaf gets a 6-dim vector with values in [0, 1]. Leaves "deeper down"
@@ -44,6 +45,11 @@ def _generate_leaf_values(depth: int, seed: int = 42) -> np.ndarray:
     # Scale up so largest possible f(J) is in a reasonable range; not strictly
     # necessary but gives plateau values comparable to DST.
     raw *= 10.0
+    if minmax_scale:
+        mins = raw.min(axis=0, keepdims=True)
+        maxs = raw.max(axis=0, keepdims=True)
+        denom = np.maximum(maxs - mins, 1e-12)
+        raw = (raw - mins) / denom
     return raw
 
 
@@ -62,14 +68,16 @@ def _build_tree_step():
 class FruitTreeEnv:
     """Stateful holder for a depth-d fruit tree with deterministic leaf values."""
 
-    def __init__(self, depth: int = DEFAULT_DEPTH, seed: int = 42):
+    def __init__(self, depth: int = DEFAULT_DEPTH, seed: int = 42,
+                 minmax_scale: bool = False):
         self.depth = int(depth)
         self.n_internal = (1 << depth) - 1   # 2^d - 1
         self.n_leaves = 1 << depth           # 2^d
         self.num_real_states = self.n_internal + self.n_leaves
         self.num_states = self.num_real_states + 1  # +1 absorbing sentinel
         self.num_actions = 2
-        self.leaf_values = _generate_leaf_values(depth, seed=seed)
+        self.leaf_values = _generate_leaf_values(depth, seed=seed,
+                                                 minmax_scale=minmax_scale)
         # First leaf index in linear ordering: n_internal
         self.first_leaf_idx = self.n_internal
 

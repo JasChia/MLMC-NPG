@@ -1,0 +1,25 @@
+# v11 queueing fair-budget sweep: Paper A queue sizes M=2,4,8
+# Paper setup: log-linear softmax, alpha=2 fairness, H=500, gamma=0.9999, lr=0.005, q_init=5.
+# MLMC at N=4 burns ~26 traj/iter (= E[B_k] ~6 + 5*4 inner). K=300 -> ~7800 trajs.
+# Bai-PG moreK: N=4, K=1000 -> 8000 trajs
+# Bai-PG largerN: N=13, K=300 -> 7800 trajs
+# REINFORCE moreK: N=4, K=2000 -> 8000 trajs
+# REINFORCE largerN: N=26, K=300 -> 7800 trajs
+
+2, ganesh_mlmc, 4, 300,  ref
+2, bai_pg,      4, 1000, moreK
+2, bai_pg,     13, 300,  largerN
+2, reinforce,   4, 2000, moreK
+2, reinforce,  26, 300,  largerN
+
+4, ganesh_mlmc, 4, 300,  ref
+4, bai_pg,      4, 1000, moreK
+4, bai_pg,     13, 300,  largerN
+4, reinforce,   4, 2000, moreK
+4, reinforce,  26, 300,  largerN
+
+8, ganesh_mlmc, 4, 300,  ref
+8, bai_pg,      4, 1000, moreK
+8, bai_pg,     13, 300,  largerN
+8, reinforce,   4, 2000, moreK
+8, reinforce,  26, 300,  largerN

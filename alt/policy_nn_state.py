@@ -84,7 +84,9 @@ class NNStatePolicy:
 
     def scores(self, s_batch, a_batch) -> torch.Tensor:
         """Per-sample score = grad of log pi(a|s) w.r.t. every parameter.
-        Per-sample autograd loop (slow but always correct).
+
+        Prefer a batched torch.func path; fall back to a Python autograd loop on
+        older torch builds or unsupported ops.
         """
         self._sync_to_net()
         s_t = torch.as_tensor(s_batch, dtype=torch.long, device=self.device)
@@ -94,24 +96,86 @@ class NNStatePolicy:
         flat_a = a_t.reshape(-1)
         N_flat = flat_s.shape[0]
 
-        for p in self.net.parameters():
-            p.requires_grad_(True)
+        if len(self._shapes) == 4:
+            # Fast analytic score for the one-hidden-layer MLP used by NN-32
+            # pilots: Linear -> Tanh -> Linear -> softmax.
+            with torch.no_grad():
+                first = self.net[0]
+                last = self.net[2]
+                flat_oh = torch.zeros(N_flat, self.num_states,
+                                      dtype=self.dtype, device=self.device)
+                flat_oh.scatter_(1, flat_s.unsqueeze(-1), 1.0)
+                hidden = torch.tanh(flat_oh @ first.weight.T + first.bias)
+                logits = hidden @ last.weight.T + last.bias
+                probs = torch.softmax(logits, dim=-1)
+                delta = torch.zeros_like(probs)
+                delta.scatter_(1, flat_a.unsqueeze(-1), 1.0)
+                delta -= probs
 
-        per_sample = []
-        for i in range(N_flat):
-            self.net.zero_grad(set_to_none=True)
-            oh = torch.zeros(self.num_states, dtype=self.dtype, device=self.device)
-            oh[flat_s[i]] = 1.0
-            logits = self.net(oh)
-            log_probs = torch.log_softmax(logits, dim=-1)
-            idx = torch.arange(log_probs.shape[-1], device=log_probs.device)
-            mask = (idx == flat_a[i]).to(log_probs.dtype)
-            lp = (log_probs * mask).sum()
-            grads = torch.autograd.grad(lp, list(self.net.parameters()),
-                                        retain_graph=False, create_graph=False)
-            per_sample.append(torch.cat([g.flatten() for g in grads]).detach())
+                grad_w2 = delta.unsqueeze(-1) * hidden.unsqueeze(1)
+                grad_b2 = delta
+                grad_hidden = (delta @ last.weight) * (1.0 - hidden * hidden)
+                grad_b1 = grad_hidden
+                grad_w1 = torch.zeros(N_flat, first.weight.shape[0],
+                                      self.num_states, dtype=self.dtype,
+                                      device=self.device)
+                rows = torch.arange(N_flat, device=self.device).unsqueeze(-1)
+                hidden_idx = torch.arange(first.weight.shape[0],
+                                          device=self.device).unsqueeze(0)
+                grad_w1[rows, hidden_idx, flat_s.unsqueeze(-1)] = grad_hidden
+                flat_scores = torch.cat([
+                    grad_w1.reshape(N_flat, -1),
+                    grad_b1,
+                    grad_w2.reshape(N_flat, -1),
+                    grad_b2,
+                ], dim=1)
+            return flat_scores.reshape(*orig_shape, self.d)
 
-        for p in self.net.parameters():
-            p.requires_grad_(False)
-        flat_scores = torch.stack(per_sample, dim=0)
+        try:
+            flat_oh = torch.zeros(N_flat, self.num_states,
+                                  dtype=self.dtype, device=self.device)
+            flat_oh.scatter_(1, flat_s.unsqueeze(-1), 1.0)
+            params = {n: p.detach() for n, p in self.net.named_parameters()}
+
+            def logprob_one(p_dict, oh_single, a_single):
+                logits = torch.func.functional_call(self.net, p_dict, oh_single)
+                log_probs = torch.log_softmax(logits, dim=-1)
+                idx = torch.arange(log_probs.shape[-1], device=log_probs.device)
+                mask = (idx == a_single).to(log_probs.dtype)
+                return (log_probs * mask).sum()
+
+            per_sample_grads = torch.func.vmap(
+                torch.func.grad(logprob_one, argnums=0),
+                in_dims=(None, 0, 0),
+            )(params, flat_oh, flat_a)
+            flat_scores = torch.cat(
+                [per_sample_grads[n].reshape(N_flat, -1) for n in self._names],
+                dim=1,
+            )
+        except (RuntimeError, AttributeError) as _e:
+            if not getattr(self, "_warned_vmap", False):
+                import sys
+                print(f"[NNStatePolicy] vmap failed, using per-sample autograd loop: {_e}",
+                      file=sys.stderr)
+                self._warned_vmap = True
+            for p in self.net.parameters():
+                p.requires_grad_(True)
+
+            per_sample = []
+            for i in range(N_flat):
+                self.net.zero_grad(set_to_none=True)
+                oh = torch.zeros(self.num_states, dtype=self.dtype, device=self.device)
+                oh[flat_s[i]] = 1.0
+                logits = self.net(oh)
+                log_probs = torch.log_softmax(logits, dim=-1)
+                idx = torch.arange(log_probs.shape[-1], device=log_probs.device)
+                mask = (idx == flat_a[i]).to(log_probs.dtype)
+                lp = (log_probs * mask).sum()
+                grads = torch.autograd.grad(lp, list(self.net.parameters()),
+                                            retain_graph=False, create_graph=False)
+                per_sample.append(torch.cat([g.flatten() for g in grads]).detach())
+
+            for p in self.net.parameters():
+                p.requires_grad_(False)
+            flat_scores = torch.stack(per_sample, dim=0)
         return flat_scores.reshape(*orig_shape, self.d)
