@@ -14,7 +14,7 @@ from pathlib import Path
 
 
 REPO = Path(__file__).resolve().parents[1]
-SRC_DIRS = [REPO / "figures" / "v14", REPO / "figures" / "v15"]
+SRC_DIRS = [REPO / "figures" / "v14", REPO / "figures" / "v15", REPO / "figures" / "v16"]
 DST_DIR = REPO / "figures" / "mlmc_wins"
 
 

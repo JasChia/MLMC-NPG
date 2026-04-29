@@ -1,0 +1,5 @@
+tag,algo,n_seeds,plateau_mean,plateau_std
+resource_nn32_B16_NK40_a025,ganesh_mlmc,2,2.378414230005442,0.0
+resource_nn32_B16_NK40_a025,bai_pg,3,2.3790214009432185,0.0010516509131087393
+resource_nn32_B16_NK40_a025,reinforce,3,3.390104720870641,5.438959822042073e-16
+resource_nn32_B16_NK40_a025,scalarized_reinforce,3,2.378414230005442,0.0

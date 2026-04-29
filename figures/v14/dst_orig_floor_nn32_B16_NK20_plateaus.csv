@@ -1,0 +1,5 @@
+tag,algo,n_seeds,plateau_mean,plateau_std
+dst_orig_floor_nn32_B16_NK20,ganesh_mlmc,3,11.71734246346442,6.108510299267476
+dst_orig_floor_nn32_B16_NK20,bai_pg,3,24.52482475246896,0.16968168497983552
+dst_orig_floor_nn32_B16_NK20,reinforce,3,21.43706351928779,5.273130051470315
+dst_orig_floor_nn32_B16_NK20,scalarized_reinforce,3,24.5559268724114,0.04708235024681343

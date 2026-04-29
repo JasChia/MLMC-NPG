@@ -1,0 +1,5 @@
+ft_nn32_B16_NK20_a025_d010: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
+  MLMC: n=7 mean=36.264 sd=1.219
+  vs bai_pg                 n=7 mean= 34.337 sd= 1.775  M-X= +1.926  p=0.0530
+  vs reinforce              n=7 mean= 32.037 sd= 4.143  M-X= +4.227  p=0.0070
+  vs scalarized_reinforce   n=7 mean= 35.565 sd= 1.406  M-X= +0.698  p=0.3176
