@@ -1,0 +1,5 @@
+mc_nn32_B8: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
+  MLMC: n=12 mean=25.126 sd=2.756
+  vs bai_pg                 n=12 mean= 25.233 sd= 4.373  M-X= -0.108  p=0.5137
+  vs reinforce              n=12 mean= 17.307 sd= 0.000  M-X= +7.818  p=0.0000
+  vs scalarized_reinforce   n=12 mean= 23.030 sd= 4.769  M-X= +2.096  p=0.4095

@@ -49,6 +49,10 @@ from src.envs.dst.multi import (dst_multi_batch_rollout, DSTMultiObj,
                                   NUM_STATES as DSTM_NUM_STATES,
                                   NUM_ACTIONS as DSTM_NUM_ACTIONS,
                                   DST_T_MAX as DSTM_T_MAX, M_REWARD as DSTM_M)
+from src.envs.mo_mountain_car import (mo_mountain_car_batch_rollout, MOMountainCarObj,
+                                        NUM_STATES as MC_NUM_STATES,
+                                        NUM_ACTIONS as MC_NUM_ACTIONS,
+                                        T_MAX as MC_T_MAX)
 from src.policies.tabular import TabularGridPolicy
 from src.policies.nn_state import NNStatePolicy
 from alt.run_v13_dst import (
@@ -81,6 +85,8 @@ def make_obj(cfg: dict, env_meta: dict):
             return ResourceObj(delta=delta, T_max=RS_T_MAX)
         if env_meta["env_kind"] == "dst_multi":
             return DSTMultiObj(delta=delta, T_max=DSTM_T_MAX)
+        if env_meta["env_kind"] == "mo_mountain_car":
+            return MOMountainCarObj(delta=delta, T_max=MC_T_MAX)
     raise ValueError(f"unknown obj_kind={obj_kind}")
 
 
@@ -118,13 +124,20 @@ def env_setup(cfg: dict, rng):
         meta = {"env_kind": "dst_multi", "t_max": DSTM_T_MAX}
         rollout_fn_factory = lambda pol: (lambda H_, B_:
             dst_multi_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "mo_mountain_car":
+        H = MC_T_MAX
+        ns, na = MC_NUM_STATES, MC_NUM_ACTIONS
+        meta = {"env_kind": "mo_mountain_car", "t_max": MC_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            mo_mountain_car_batch_rollout({}, pol, H_, B_, rng))
     else:
         raise ValueError(cfg["env_kind"])
 
     if cfg["policy"] == "tabular":
         policy = TabularGridPolicy(ns, na)
     else:
-        policy = NNStatePolicy(ns, na, hidden=tuple(cfg["hidden"]))
+        policy = NNStatePolicy(ns, na, hidden=tuple(cfg["hidden"]),
+                                activation=cfg.get("activation", "tanh"))
     obj = make_obj(cfg, meta)
     rollout_fn = rollout_fn_factory(policy)
     return policy, obj, rollout_fn, H, meta
@@ -158,6 +171,8 @@ def env_label(cfg: dict) -> str:
         return f"fruit_tree_a{int(round(cfg['alpha']*100)):03d}_d{cfg['depth']}"
     if cfg["env_kind"] == "dst":
         return cfg["env"]
+    if cfg["env_kind"] == "mo_mountain_car":
+        return "mo_mc"
     return cfg["env_kind"]
 
 
@@ -165,6 +180,9 @@ def filename(cfg: dict) -> str:
     pol = cfg["policy"]
     if pol == "nn":
         pol = "nn" + "x".join(str(x) for x in cfg["hidden"])
+        act = cfg.get("activation", "tanh")
+        if act != "tanh":
+            pol = f"{pol}_{act}"
     else:
         pol = "tab"
     obj_tag = "" if cfg.get("obj_kind", "alpha_fair") == "alpha_fair" else f"_o{cfg['obj_kind']}"
@@ -220,7 +238,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--out_dir", required=True)
     p.add_argument("--tag", required=True)
-    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi"], required=True)
+    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car"], required=True)
     p.add_argument("--env", default="dst_open")
     p.add_argument("--depth", type=int, default=7)
     p.add_argument("--alpha", type=float, default=0.5)
@@ -228,6 +246,8 @@ def main() -> None:
                    choices=["alpha_fair", "alpha_fair_time", "env_default"])
     p.add_argument("--policy", choices=["tabular", "nn"], default="nn")
     p.add_argument("--hidden", type=int, nargs="+", default=[32])
+    p.add_argument("--activation", default="tanh",
+                   choices=["tanh", "relu", "elu", "sigmoid", "gelu", "leaky_relu"])
     p.add_argument("--B", type=int, required=True)
     p.add_argument("--N", type=int, required=True)
     p.add_argument("--K", type=int, required=True)

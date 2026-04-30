@@ -1,0 +1,5 @@
+tag,algo,n_seeds,plateau_mean,plateau_std
+mc_nn32_B8_relu,ganesh_mlmc,7,24.735869762998117,0.37147248135517896
+mc_nn32_B8_relu,bai_pg,7,22.701445158904967,6.727486925284996
+mc_nn32_B8_relu,reinforce,7,17.307455627101174,0.0
+mc_nn32_B8_relu,scalarized_reinforce,7,22.70144515890497,6.727486925284995

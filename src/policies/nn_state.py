@@ -23,9 +23,14 @@ import torch
 from torch import nn
 
 
+_ACTIVATIONS = {"tanh": nn.Tanh, "relu": nn.ReLU, "elu": nn.ELU,
+                "sigmoid": nn.Sigmoid, "gelu": nn.GELU, "leaky_relu": nn.LeakyReLU}
+
+
 class NNStatePolicy:
     def __init__(self, num_states: int, num_actions: int,
                  hidden: Sequence[int] = (32,),
+                 activation: str = "tanh",
                  device: str = "cpu", dtype=torch.float32):
         self.num_states = int(num_states)
         self.num_actions = int(num_actions)
@@ -33,9 +38,12 @@ class NNStatePolicy:
         self.device = device
         self.dtype = dtype
 
+        if activation not in _ACTIVATIONS:
+            raise ValueError(f"unknown activation {activation}; pick from {list(_ACTIVATIONS)}")
+        Act = _ACTIVATIONS[activation]
         layers, prev = [], num_states
         for h in hidden:
-            layers += [nn.Linear(prev, h), nn.Tanh()]
+            layers += [nn.Linear(prev, h), Act()]
             prev = h
         layers += [nn.Linear(prev, num_actions)]
         self.net = nn.Sequential(*layers).to(device=device, dtype=dtype)

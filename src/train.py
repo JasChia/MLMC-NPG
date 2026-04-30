@@ -11,7 +11,7 @@ from typing import Callable, Dict, Any
 import numpy as np
 import torch
 
-from .algorithms import (bai_pg_step, ganesh_npg_step, ganesh_mlmc_step,
+from .algorithms import (bai_pg_step, ganesh_mlmc_step,
                           reinforce_step, scalarized_reinforce_step)
 
 
@@ -72,8 +72,6 @@ def train(
     for k in range(K):
         if algorithm == "bai_pg":
             omega, J_hat, ntraj = bai_pg_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
-        elif algorithm == "ganesh_npg":
-            omega, J_hat, ntraj = ganesh_npg_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
         elif algorithm == "ganesh_mlmc":
             omega, J_hat, ntraj = ganesh_mlmc_step(policy, rollout_fn, obj, gamma, H, rng=rng, **algo_kwargs)
         elif algorithm == "reinforce":

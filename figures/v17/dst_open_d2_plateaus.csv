@@ -1,0 +1,5 @@
+tag,algo,n_seeds,plateau_mean,plateau_std
+dst_open_d2,ganesh_mlmc,3,8.752619528412316,0.22644080517886692
+dst_open_d2,bai_pg,3,8.873479236111729,0.0
+dst_open_d2,reinforce,3,8.871178968192728,0.20466630107101733
+dst_open_d2,scalarized_reinforce,3,8.873479236111727,0.0

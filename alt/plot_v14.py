@@ -25,9 +25,9 @@ from scipy import stats
 RUN_RE = re.compile(
     r"(?P<algo>bai_pg|reinforce|ganesh_mlmc|scalarized_reinforce)_"
     r"(?P<env_tag>.+?)_"
-    r"(?P<policy>tab|nn\d+(?:x\d+)*)_"
+    r"(?P<policy>tab|nn\d+(?:x\d+)*(?:_[a-z_]+)?)_"
     r"B(?P<B>\d+)_N(?P<N>\d+)_K(?P<K>\d+)_"
-    r"beta(?P<beta>[^_]+)_lr(?P<lr>[^_]+)(?:_o[^_]+)?_"
+    r"beta(?P<beta>[^_]+)_lr(?P<lr>[^_]+)(?:_o[a-z_]+)?_"
     r"v(?P<version>1[45])_(?P<tag>.+)_seed(?P<seed>\d+)"
 )
 
