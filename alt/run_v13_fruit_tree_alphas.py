@@ -27,7 +27,6 @@ import torch
 from alt.envs_fruit_tree import FruitTreeEnv, fruit_tree_batch_rollout
 from alt.objectives_alpha_fair import AlphaFairObj
 from alt.policy_grid import TabularGridPolicy
-from alt.scalarized_reinforce import train_scalarized_reinforce
 from src.train import train
 
 
@@ -88,27 +87,22 @@ def run_one(cfg: dict) -> dict:
 
     N = cfg["N"]
     t0 = time.time()
-    if cfg["algorithm"] == "scalarized_reinforce":
-        history = train_scalarized_reinforce(
-            policy=policy, rollout_fn=rollout_fn, obj=obj,
-            gamma=cfg["gamma"], K=cfg["K"], H=env.depth, rng=rng,
-            lr=cfg["lr"], N=N, verbose=False,
-        )
+    if cfg["algorithm"] == "bai_pg":
+        algo_kwargs = {"N1": N, "N2": N}
+    elif cfg["algorithm"] == "reinforce":
+        algo_kwargs = {"N": N, "delta_guard": cfg["delta_reinforce"]}
+    elif cfg["algorithm"] == "scalarized_reinforce":
+        algo_kwargs = {"N": N}
+    elif cfg["algorithm"] == "ganesh_mlmc":
+        algo_kwargs = {"B_max": cfg["B_max"], "B_inner": N,
+                       "N_inner": cfg["N_inner"], "beta": cfg["beta"]}
     else:
-        if cfg["algorithm"] == "bai_pg":
-            algo_kwargs = {"N1": N, "N2": N}
-        elif cfg["algorithm"] == "reinforce":
-            algo_kwargs = {"N": N, "delta_guard": cfg["delta_reinforce"]}
-        elif cfg["algorithm"] == "ganesh_mlmc":
-            algo_kwargs = {"B_max": cfg["B_max"], "B_inner": N,
-                           "N_inner": cfg["N_inner"], "beta": cfg["beta"]}
-        else:
-            raise ValueError(cfg["algorithm"])
-        history = train(
-            algorithm=cfg["algorithm"], policy=policy, rollout_fn=rollout_fn, obj=obj,
-            gamma=cfg["gamma"], K=cfg["K"], H=env.depth, rng=rng,
-            lr=cfg["lr"], algo_kwargs=algo_kwargs, verbose=False,
-        )
+        raise ValueError(cfg["algorithm"])
+    history = train(
+        algorithm=cfg["algorithm"], policy=policy, rollout_fn=rollout_fn, obj=obj,
+        gamma=cfg["gamma"], K=cfg["K"], H=env.depth, rng=rng,
+        lr=cfg["lr"], algo_kwargs=algo_kwargs, verbose=False,
+    )
     history["wall_time_sec"] = time.time() - t0
     history["config"] = cfg
     history["final_theta"] = [float(x) for x in policy.theta.detach().cpu().numpy()]

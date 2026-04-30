@@ -241,3 +241,56 @@ def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=
     # For logging, report the paper-scaled f(J_hat):
     J_hat = _discounted_returns(rr, gamma).mean(axis=0)
     return omega.detach().cpu().numpy(), J_hat, N
+
+
+# -----------------------------------------------------------------------------
+# Scalarized REINFORCE — best-effort episodic baseline for concave MORL
+# -----------------------------------------------------------------------------
+
+def scalarized_reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N):
+    """One outer iteration of scalarized REINFORCE.
+
+    Standard MORL adaptation of single-objective REINFORCE:
+      1. Roll out N trajectories, compute J_hat = (1/N) sum_i J(tau_i) (M-vector).
+      2. Compute grad_f = obj.grad(J_hat) (M-vector). This is the linearization
+         of f at the current J_hat — the standard concave-Frank-Wolfe direction.
+      3. Build a per-step scalar reward r_scalar(t) = grad_f . r(t) and run
+         vanilla PGT on it: omega = (1/N) sum_i sum_t score_{i,t} * rtg_scalar_{i,t}
+         where rtg_scalar is the discounted reverse-cumsum of r_scalar.
+
+    Differences vs reinforce_step (Paper A eq. (38)):
+      - No t/(cum_disc + delta_guard) per-step surrogate; no divide-by-zero
+        pathology on negative reward channels (DST time penalty).
+      - Works on any reward sign; no `reward_transform` workaround needed.
+      - Uses the SAME N trajectories for both J_hat and the gradient (one batch),
+        distinguishing it from Bai-PG which uses N1 + N2 = 2N independent batches
+        and gets the cleaner unbiased-conditional-on-J_hat estimator.
+
+    Differences vs bai_pg_step:
+      - Single batch instead of two => half the per-iter trajectory cost,
+        introducing some bias from correlation between J_hat and the gradient
+        on the same batch.
+      - Otherwise identical gradient form — this is "Bai-PG with shared batch."
+
+    Per-iter trajectory cost: N (matches reinforce_step).
+    """
+    ss, aa, rr = rollout_fn(H, N)  # (N, H, M)
+    H_len = rr.shape[1]
+    gammas = gamma ** np.arange(H_len)  # (H,)
+
+    # Discounted return per trajectory (N, M); mean is plug-in J_hat.
+    discounted = rr * gammas[None, :, None]
+    J_per = discounted.sum(axis=1)
+    J_hat = J_per.mean(axis=0)
+    grad_f = obj.grad(J_hat)  # (M,)
+
+    # Per-step scalarized reward r_scalar(t) = grad_f . r(t)  shape (N, H).
+    r_scalar = (rr * grad_f[None, None, :]).sum(axis=-1)
+    # Discounted then PGT-style reverse cumsum.
+    r_scalar_disc = r_scalar * gammas[None, :]
+    rtg = np.ascontiguousarray(np.cumsum(r_scalar_disc[:, ::-1], axis=1)[:, ::-1])
+
+    scores = policy.scores(ss, aa)  # (N, H, d)
+    rtg_t = torch.as_tensor(rtg, dtype=policy.dtype, device=policy.device)
+    omega = (scores * rtg_t.unsqueeze(-1)).sum(dim=(0, 1)) / N
+    return omega.detach().cpu().numpy(), J_hat, N
