@@ -81,6 +81,10 @@ all 3 channels handled symmetrically.
 | B=8, N=20, K=15 | 7 | 26.26 | 25.73 | **+0.54** | +8.96 | +5.03 |
 | B=8, N=20, K=10 | 7 | 26.24 | 25.20 | **+1.04** | +8.93 | +4.65 |
 | NN-16 B=8 N=K=20 | 5 | 24.22 | 22.09 | **+2.13** | +6.91 | -0.20 |
+| NN-64 B=8 N=K=20 | 5 | 20.34 | 26.06 | **−5.72** | +3.03 | −2.77 |
+| NN-32 B=2 N=K=20 | 5 | 23.79 | 24.89 | **−1.10** | +6.48 | −2.67 |
+| NN-32 B=4 N=K=20 | 3 | 24.50 | 22.61 | **+1.89** | +7.19 | +2.05 |
+| NN-32 B=16 N=K=20 d=0.5 | 3 | 20.49 | 23.52 | **−3.03** | +3.18 | −0.24 |
 
 Plot: [`figures/v17/mc_nn32_B8_relu_fair_budget.png`](mc_nn32_B8_relu_fair_budget.png) — clean separation MLMC vs alternatives. MLMC and Bai-PG closely overlap on average; both clearly beat REINFORCE variants.
 
@@ -151,6 +155,21 @@ python -m alt.plot_v14 \
   --results_dir results/sweep_v17_mc_r2 --tag mc_nn32_B8 \
   --title "MO Mountain Car NN-32 B=8 N=K=20 [7 seeds]" \
   --out_dir figures/v17
+```
+
+## Sweet-spot diagram for MO Mountain Car
+
+```
+         B=2     B=4     B=8     B=16     B=32
+NN-16    --     --     +2.13    --       --
+NN-32   -1.10  +1.89   +2.17   -3.03    --       ← B=8 is the sweet spot
+NN-64    --     --     -5.72    --       --      ← bigger NN loses
+```
+
+```
+   K=10    K=15    K=20    K=30
+   +1.04   +0.54   +2.17   -2.16        ← K=20 ideal; smaller K maintains lead;
+                                          larger K lets Bai catch up
 ```
 
 ## Take-aways
