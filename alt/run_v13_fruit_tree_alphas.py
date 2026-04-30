@@ -24,9 +24,9 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from alt.envs_fruit_tree import FruitTreeEnv, fruit_tree_batch_rollout
-from alt.objectives_alpha_fair import AlphaFairObj
-from alt.policy_grid import TabularGridPolicy
+from src.envs.fruit_tree import FruitTreeEnv, fruit_tree_batch_rollout
+from src.objectives.alpha_fair import AlphaFairObj
+from src.policies.tabular import TabularGridPolicy
 from src.train import train
 
 

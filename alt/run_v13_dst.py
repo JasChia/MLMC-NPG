@@ -28,20 +28,20 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from alt.envs_dst import DST_GRID_COLS, DST_GRID_ROWS, DST_TREASURES, DST_T_MAX
-from alt.envs_dst_large import (
+from src.envs.dst.small import DST_GRID_COLS, DST_GRID_ROWS, DST_TREASURES, DST_T_MAX
+from src.envs.dst.large import (
     GRID_COLS as LARGE_COLS, GRID_ROWS as LARGE_ROWS,
     LARGE_DST_TREASURES, T_MAX as LARGE_T_MAX,
+    LargeDSTObj,
 )
-from alt.envs_dst_original import (
+from src.envs.dst.original import (
     GRID_COLS as ORIG_COLS, GRID_ROWS as ORIG_ROWS,
     ORIGINAL_DST_TREASURES, T_MAX as ORIG_T_MAX,
+    OriginalDSTObj,
 )
-from alt.objectives_dst import DSTreasureObj
-from alt.envs_dst_large import LargeDSTObj
-from alt.envs_dst_original import OriginalDSTObj
-from alt.policy_grid import TabularGridPolicy
-from alt.policy_nn_state import NNStatePolicy
+from src.objectives.dst import DSTreasureObj
+from src.policies.tabular import TabularGridPolicy
+from src.policies.nn_state import NNStatePolicy
 from src.train import train
 
 

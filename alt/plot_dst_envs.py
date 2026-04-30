@@ -15,12 +15,12 @@ import matplotlib.pyplot as plt
 import matplotlib.patches as mpatches
 import numpy as np
 
-from alt.envs_dst import DST_TREASURES, DST_GRID_ROWS, DST_GRID_COLS, DST_T_MAX
-from alt.envs_dst_large import (
+from src.envs.dst.small import DST_TREASURES, DST_GRID_ROWS, DST_GRID_COLS, DST_T_MAX
+from src.envs.dst.large import (
     LARGE_DST_TREASURES, GRID_ROWS as LARGE_ROWS,
     GRID_COLS as LARGE_COLS, T_MAX as LARGE_T_MAX,
 )
-from alt.envs_dst_original import (
+from src.envs.dst.original import (
     ORIGINAL_DST_TREASURES, GRID_ROWS as ORIG_ROWS,
     GRID_COLS as ORIG_COLS, T_MAX as ORIG_T_MAX,
 )

@@ -34,23 +34,23 @@ from pathlib import Path
 import numpy as np
 import torch
 
-from alt.envs_fruit_tree import FruitTreeEnv, fruit_tree_batch_rollout
-from alt.objectives_alpha_fair import AlphaFairObj, AlphaFairTimeObj
-from alt.objectives_dst import DSTreasureObj
-from alt.envs_bonus_world import (bonus_world_batch_rollout, BonusWorldObj,
+from src.envs.fruit_tree import FruitTreeEnv, fruit_tree_batch_rollout
+from src.objectives.alpha_fair import AlphaFairObj, AlphaFairTimeObj
+from src.objectives.dst import DSTreasureObj
+from src.envs.bonus_world import (bonus_world_batch_rollout, BonusWorldObj,
                                     NUM_STATES as BW_NUM_STATES,
                                     NUM_ACTIONS as BW_NUM_ACTIONS,
                                     T_MAX as BW_T_MAX)
-from alt.envs_resource import (resource_batch_rollout, ResourceObj,
+from src.envs.resource import (resource_batch_rollout, ResourceObj,
                                 NUM_STATES as RS_NUM_STATES,
                                 NUM_ACTIONS as RS_NUM_ACTIONS,
                                 T_MAX as RS_T_MAX)
-from alt.envs_dst_multi import (dst_multi_batch_rollout, DSTMultiObj,
+from src.envs.dst.multi import (dst_multi_batch_rollout, DSTMultiObj,
                                   NUM_STATES as DSTM_NUM_STATES,
                                   NUM_ACTIONS as DSTM_NUM_ACTIONS,
                                   DST_T_MAX as DSTM_T_MAX, M_REWARD as DSTM_M)
-from alt.policy_grid import TabularGridPolicy
-from alt.policy_nn_state import NNStatePolicy
+from src.policies.tabular import TabularGridPolicy
+from src.policies.nn_state import NNStatePolicy
 from alt.run_v13_dst import (
     SPECS as DST_SPECS, dst_rollout, make_obj as make_dst_default_obj,
     dst_reinforce_reward_transform,
@@ -71,7 +71,7 @@ def make_obj(cfg: dict, env_meta: dict):
         return AlphaFairTimeObj(alpha=cfg["alpha"], delta=delta, T_max=T_max)
     if obj_kind == "env_default":
         if env_meta["env_kind"] == "fruit_tree":
-            from alt.envs_fruit_tree import FruitTreeObj
+            from src.envs.fruit_tree import FruitTreeObj
             return FruitTreeObj(delta=delta)
         if env_meta["env_kind"] == "dst":
             return make_dst_default_obj(env_meta["spec"], delta)
