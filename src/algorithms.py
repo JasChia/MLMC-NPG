@@ -63,9 +63,11 @@ def _empirical_fisher(scores: torch.Tensor, gamma: float) -> torch.Tensor:
 
     scores: (B, H, d). Returns (d, d).
     """
+    #Note: not exactly what was written for operation order (matrix operations for speed), but result should be the same
     B, H, d = scores.shape
     gammas = torch.tensor(gamma ** np.arange(H), dtype=scores.dtype, device=scores.device)
     weighted = scores * torch.sqrt(gammas).view(1, H, 1)
+    #Note this is sqrt(gamma) psi_t^i
     flat = weighted.reshape(B * H, d)
     return (flat.T @ flat) / B
 
@@ -112,24 +114,28 @@ def bai_pg_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N1, N2):
 
 
 # -----------------------------------------------------------------------------
-# Paper B, Algorithm 1 — Vanilla NPG (requires 2nd-order-smooth f)
+# IGNORE THIS Paper B, Algorithm 1 — Vanilla NPG (requires 2nd-order-smooth f)
 # -----------------------------------------------------------------------------
 
-def ganesh_npg_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
-                    B1, B2, N_inner, beta):
-    """One outer iteration of Ganesh-Aggarwal (2026), Algorithm 1.
+# def ganesh_npg_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
+#                     B1, B2, N_inner, beta):
+#     """One outer iteration of Ganesh-Aggarwal (2026), Algorithm 1.
 
-    Differs from Bai-PG: instead of a single gradient step, solves the NPG
-    direction via an inner SGD on the quadratic (1/2) omega^T F omega - omega^T g,
-    using the empirical Fisher.
-    """
-    _, _, rr1 = rollout_fn(H, B1)
-    J_hat = _discounted_returns(rr1, gamma).mean(axis=0)
-    grad_f = obj.grad(J_hat)  # frozen across the inner loop
+#     train.py will call each iteration (up to K times)
 
-    omega, inner_traj = _solve_inner_npg(policy, rollout_fn, grad_f, gamma, H,
-                                         B2, N_inner, beta)
-    return omega, J_hat, B1 + inner_traj
+#     rollout_fn depends on environment
+
+#     Differs from Bai-PG: instead of a single gradient step, solves the NPG
+#     direction via an inner SGD on the quadratic (1/2) omega^T F omega - omega^T g,
+#     using the empirical Fisher.
+#     """
+#     _, _, rr1 = rollout_fn(H, B1)
+#     J_hat = _discounted_returns(rr1, gamma).mean(axis=0)
+#     grad_f = obj.grad(J_hat)  # frozen across the inner loop
+
+#     omega, inner_traj = _solve_inner_npg(policy, rollout_fn, grad_f, gamma, H,
+#                                          B2, N_inner, beta)
+#     return omega, J_hat, B1 + inner_traj
 
 
 # -----------------------------------------------------------------------------
@@ -140,6 +146,12 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
                      B_max, B_inner, N_inner, beta, rng: np.random.Generator):
     """One outer iteration of Ganesh-Aggarwal (2026), Algorithm 2.
 
+    train.py will call each iteration (up to K times)
+
+    RolloutFn depends on environment
+
+    obj is 
+
     MLMC return estimator:
         Q ~ Geom(1/2)
         if 2^Q > B_max : fall back to J_{H,1} (single trajectory)
@@ -147,10 +159,6 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
             df(J_MLMC) = df(J_{H,1}) + 2^Q [df(J_{H,2^Q}) - df(J_{H, 2^{Q-1}})]
         with J_{H, 2^{Q-1}} using the FIRST HALF of the 2^Q trajectories
         that produced J_{H, 2^Q}  (the nested coupling).
-
-    The nested coupling is what yields the variance bound in Paper B's Lemma 6;
-    sampling J_{H, 2^{Q-1}} independently would make the estimator unbiased but
-    blow up the variance (the telescoping argument breaks).
     """
     # Line 3
     Q = int(rng.geometric(0.5)) # Q in {1, 2, ...}, P(Q = q) = 2^{-q}
