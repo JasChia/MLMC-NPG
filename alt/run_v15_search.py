@@ -53,6 +53,14 @@ from src.envs.mo_mountain_car import (mo_mountain_car_batch_rollout, MOMountainC
                                         NUM_STATES as MC_NUM_STATES,
                                         NUM_ACTIONS as MC_NUM_ACTIONS,
                                         T_MAX as MC_T_MAX)
+from src.envs.cliff_walking import (cliff_walking_batch_rollout, CliffWalkingObj,
+                                      NUM_STATES as CW_NUM_STATES,
+                                      NUM_ACTIONS as CW_NUM_ACTIONS,
+                                      T_MAX as CW_T_MAX)
+from src.envs.dst.concave import (concave_dst_batch_rollout, ConcaveDSTObj,
+                                    NUM_STATES as CDST_NUM_STATES,
+                                    NUM_ACTIONS as CDST_NUM_ACTIONS,
+                                    T_MAX as CDST_T_MAX)
 from src.policies.tabular import TabularGridPolicy
 from src.policies.nn_state import NNStatePolicy
 from alt.run_v13_dst import (
@@ -87,6 +95,10 @@ def make_obj(cfg: dict, env_meta: dict):
             return DSTMultiObj(delta=delta, T_max=DSTM_T_MAX)
         if env_meta["env_kind"] == "mo_mountain_car":
             return MOMountainCarObj(delta=delta, T_max=MC_T_MAX)
+        if env_meta["env_kind"] == "cliff_walking":
+            return CliffWalkingObj(delta=delta, T_max=CW_T_MAX)
+        if env_meta["env_kind"] == "dst_concave":
+            return ConcaveDSTObj(delta=delta, T_max=CDST_T_MAX)
     raise ValueError(f"unknown obj_kind={obj_kind}")
 
 
@@ -130,6 +142,18 @@ def env_setup(cfg: dict, rng):
         meta = {"env_kind": "mo_mountain_car", "t_max": MC_T_MAX}
         rollout_fn_factory = lambda pol: (lambda H_, B_:
             mo_mountain_car_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "cliff_walking":
+        H = CW_T_MAX
+        ns, na = CW_NUM_STATES, CW_NUM_ACTIONS
+        meta = {"env_kind": "cliff_walking", "t_max": CW_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            cliff_walking_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "dst_concave":
+        H = CDST_T_MAX
+        ns, na = CDST_NUM_STATES, CDST_NUM_ACTIONS
+        meta = {"env_kind": "dst_concave", "t_max": CDST_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            concave_dst_batch_rollout({}, pol, H_, B_, rng))
     else:
         raise ValueError(cfg["env_kind"])
 
@@ -238,7 +262,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--out_dir", required=True)
     p.add_argument("--tag", required=True)
-    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car"], required=True)
+    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car", "cliff_walking", "dst_concave"], required=True)
     p.add_argument("--env", default="dst_open")
     p.add_argument("--depth", type=int, default=7)
     p.add_argument("--alpha", type=float, default=0.5)

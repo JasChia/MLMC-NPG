@@ -109,14 +109,39 @@ NPG amplifies into immediate policy collapse.
 
 ## Other envs at the small-B winning config (also tested)
 
-| env | NN-32 B=8 N=K=20 d=0.5 | M-Bai |
+Each env tested at NN-32, B=8, N=K=20, δ=0.5, lr=0.05, β=0.05, γ=0.9999:
+
+| env | M-Bai | conclusion |
 |---|---|---|
-| MO Mountain Car (winning config) | MLMC 25.98 vs Bai 23.81 | **+2.17** |
-| Bonus World | MLMC 3.95 vs Bai 8.45 | -4.50 |
-| Resource Gathering | MLMC 5.49 vs Bai 6.28 | -0.79 |
-| DST_multi | MLMC 10.18 vs Bai 11.09 | -0.91 |
+| **MO Mountain Car** | **+2.17** (7s), +0.06 (12s) | **MLMC WINS — only winning env** |
+| DST_open (NN-32) | -1.45 to -3.03 | MLMC loses |
+| DST_floor | -0.51 | MLMC loses |
+| DST_original_floor | -15 | MLMC catastrophically collapses |
+| DST_concave (mo-gym variant; smaller treasure values 0.7-23.7) | **-7.59** | MLMC loses badly |
+| DST_multi (M=6, treasure-flag channels) | -0.91 | MLMC loses |
+| Cliff Walking (4×12 grid, M=3 with -100 cliff penalty) | **-5.56** | MLMC loses; even REINFORCE wins (18.13) |
+| Bonus World (M=3) | -4.50 | MLMC loses |
+| Resource Gathering (M=3) | -0.79 | MLMC loses |
 
 So the small-B trick is **MO-Mountain-Car-specific**, not a general phenomenon.
+
+## What makes MO Mountain Car uniquely favorable
+
+Pattern across the 9 envs tested:
+
+| env property | MO MC (winning) | DST family / Cliff / Bonus / Resource (losing) |
+|---|---|---|
+| reward channel signs | **all non-positive** (penalties only) | mixed (positive treasure + negative time) |
+| max per-step penalty magnitude | -1 per channel | DST: -1; Cliff: -100; Bonus/Resource: terminal +1/+2 jumps |
+| 1-step local minimum near init | **none** (physics prevents 1-step escape) | DST: "go down once, pick treasure-1"; Cliff: "step into cliff" |
+| `T_max + J_m` at init | ≈ T_max for two channels (non-zero, well-conditioned) | DST: ≈0 for time channel (gradient blow-up) |
+| termination condition | reach goal OR T_max | reach treasure OR T_max |
+
+**Diagnosis**: MLMC wins on environments where (1) all reward channels are
+non-positive penalties, (2) per-step penalties are balanced/small, (3) no
+1-step local-minimum exists. The natural-gradient amplification then drives
+exploration productively. Sharp positive rewards or extreme penalties create
+gradient blow-ups that NPG amplifies into policy collapse.
 
 ## Files & reproduction
 
