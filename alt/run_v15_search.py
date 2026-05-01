@@ -61,6 +61,18 @@ from src.envs.dst.concave import (concave_dst_batch_rollout, ConcaveDSTObj,
                                     NUM_STATES as CDST_NUM_STATES,
                                     NUM_ACTIONS as CDST_NUM_ACTIONS,
                                     T_MAX as CDST_T_MAX)
+from src.envs.mo_mountain_car_cont import (mc_cont_batch_rollout, MCContObj,
+                                              NUM_STATES as MCC_NUM_STATES,
+                                              NUM_ACTIONS as MCC_NUM_ACTIONS,
+                                              T_MAX as MCC_T_MAX)
+from src.envs.breakable_bottles import (breakable_bottles_batch_rollout, BreakableBottlesObj,
+                                          NUM_STATES as BB_NUM_STATES,
+                                          NUM_ACTIONS as BB_NUM_ACTIONS,
+                                          T_MAX as BB_T_MAX)
+from src.envs.mo_lunar_lander import (lunar_lander_batch_rollout, MOLunarLanderObj,
+                                        NUM_STATES as LL_NUM_STATES,
+                                        NUM_ACTIONS as LL_NUM_ACTIONS,
+                                        T_MAX as LL_T_MAX)
 from src.policies.tabular import TabularGridPolicy
 from src.policies.nn_state import NNStatePolicy
 from alt.run_v13_dst import (
@@ -99,6 +111,12 @@ def make_obj(cfg: dict, env_meta: dict):
             return CliffWalkingObj(delta=delta, T_max=CW_T_MAX)
         if env_meta["env_kind"] == "dst_concave":
             return ConcaveDSTObj(delta=delta, T_max=CDST_T_MAX)
+        if env_meta["env_kind"] == "mo_mc_cont":
+            return MCContObj(delta=delta, T_max=MCC_T_MAX)
+        if env_meta["env_kind"] == "breakable_bottles":
+            return BreakableBottlesObj(delta=delta, T_max=BB_T_MAX)
+        if env_meta["env_kind"] == "mo_lunar_lander":
+            return MOLunarLanderObj(delta=delta, T_max=LL_T_MAX)
     raise ValueError(f"unknown obj_kind={obj_kind}")
 
 
@@ -154,6 +172,24 @@ def env_setup(cfg: dict, rng):
         meta = {"env_kind": "dst_concave", "t_max": CDST_T_MAX}
         rollout_fn_factory = lambda pol: (lambda H_, B_:
             concave_dst_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "mo_mc_cont":
+        H = MCC_T_MAX
+        ns, na = MCC_NUM_STATES, MCC_NUM_ACTIONS
+        meta = {"env_kind": "mo_mc_cont", "t_max": MCC_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            mc_cont_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "breakable_bottles":
+        H = BB_T_MAX
+        ns, na = BB_NUM_STATES, BB_NUM_ACTIONS
+        meta = {"env_kind": "breakable_bottles", "t_max": BB_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            breakable_bottles_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "mo_lunar_lander":
+        H = LL_T_MAX
+        ns, na = LL_NUM_STATES, LL_NUM_ACTIONS
+        meta = {"env_kind": "mo_lunar_lander", "t_max": LL_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            lunar_lander_batch_rollout({}, pol, H_, B_, rng))
     else:
         raise ValueError(cfg["env_kind"])
 
@@ -262,7 +298,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--out_dir", required=True)
     p.add_argument("--tag", required=True)
-    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car", "cliff_walking", "dst_concave"], required=True)
+    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car", "cliff_walking", "dst_concave", "mo_mc_cont", "breakable_bottles", "mo_lunar_lander"], required=True)
     p.add_argument("--env", default="dst_open")
     p.add_argument("--depth", type=int, default=7)
     p.add_argument("--alpha", type=float, default=0.5)
