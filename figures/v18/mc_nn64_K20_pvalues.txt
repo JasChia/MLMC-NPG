@@ -1,0 +1,3 @@
+mc_nn64_K20: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
+  MLMC: n=4 mean=21.081 sd=4.067
+  vs bai_pg                 n=3 mean= 28.651 sd= 1.551  M-X= -7.571  p=0.0571

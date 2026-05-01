@@ -1,0 +1,5 @@
+bb_K40: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
+  MLMC: n=5 mean=9.285 sd=0.031
+  vs bai_pg                 n=5 mean=  9.308 sd= 0.000  M-X= -0.023  p=0.6905
+  vs reinforce              n=5 mean=  9.308 sd= 0.000  M-X= -0.023  p=0.6905
+  vs scalarized_reinforce   n=5 mean=  9.308 sd= 0.000  M-X= -0.023  p=0.6905
