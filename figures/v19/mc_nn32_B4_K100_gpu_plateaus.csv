@@ -1,0 +1,5 @@
+tag,algo,n_seeds,plateau_mean,plateau_std
+mc_nn32_B4_K100_gpu,ganesh_mlmc,5,23.964724243588172,4.492925268172722
+mc_nn32_B4_K100_gpu,bai_pg,5,25.09697202825007,6.58127636438321
+mc_nn32_B4_K100_gpu,reinforce,5,17.307455627101152,0.0
+mc_nn32_B4_K100_gpu,scalarized_reinforce,5,24.383186135689506,5.001608122001805

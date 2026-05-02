@@ -193,11 +193,13 @@ def env_setup(cfg: dict, rng):
     else:
         raise ValueError(cfg["env_kind"])
 
+    device = cfg.get("device", "cpu")
     if cfg["policy"] == "tabular":
-        policy = TabularGridPolicy(ns, na)
+        policy = TabularGridPolicy(ns, na, device=device)
     else:
         policy = NNStatePolicy(ns, na, hidden=tuple(cfg["hidden"]),
-                                activation=cfg.get("activation", "tanh"))
+                                activation=cfg.get("activation", "tanh"),
+                                device=device)
     obj = make_obj(cfg, meta)
     rollout_fn = rollout_fn_factory(policy)
     return policy, obj, rollout_fn, H, meta
@@ -321,6 +323,8 @@ def main() -> None:
     p.add_argument("--delta_reinforce", type=float, default=1.0)
     p.add_argument("--workers", type=int, default=4)
     p.add_argument("--skip_existing", action="store_true")
+    p.add_argument("--device", default="cpu",
+                   help="torch device for policy: cpu | cuda | cuda:0")
     args = p.parse_args()
 
     K_pg, K_rein = derive_K(args.K, args.N, args.B)
