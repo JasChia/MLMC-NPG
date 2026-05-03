@@ -27,9 +27,16 @@ from __future__ import annotations
 import argparse
 import json
 import math
+import os
+import sys
 import time
 from concurrent.futures import ProcessPoolExecutor, as_completed
 from pathlib import Path
+
+_PROJECT_ROOT = str(Path(__file__).resolve().parent.parent)
+if _PROJECT_ROOT not in sys.path:
+    sys.path.insert(0, _PROJECT_ROOT)
+os.environ["PYTHONPATH"] = _PROJECT_ROOT + os.pathsep + os.environ.get("PYTHONPATH", "")
 
 import numpy as np
 import torch
@@ -69,6 +76,21 @@ from src.envs.breakable_bottles import (breakable_bottles_batch_rollout, Breakab
                                           NUM_STATES as BB_NUM_STATES,
                                           NUM_ACTIONS as BB_NUM_ACTIONS,
                                           T_MAX as BB_T_MAX)
+from src.envs.breakable_bottles_easy import (breakable_bottles_easy_batch_rollout,
+                                                BreakableBottlesEasyObj,
+                                                NUM_STATES as BBE_NUM_STATES,
+                                                NUM_ACTIONS as BBE_NUM_ACTIONS,
+                                                T_MAX as BBE_T_MAX)
+from src.envs.breakable_bottles_short import (breakable_bottles_short_batch_rollout,
+                                                 BreakableBottlesShortObj,
+                                                 NUM_STATES as BBS_NUM_STATES,
+                                                 NUM_ACTIONS as BBS_NUM_ACTIONS,
+                                                 T_MAX as BBS_T_MAX)
+from src.envs.breakable_bottles_short_t100 import (breakable_bottles_short_t100_batch_rollout,
+                                                     BreakableBottlesShortT100Obj,
+                                                     NUM_STATES as BBS100_NUM_STATES,
+                                                     NUM_ACTIONS as BBS100_NUM_ACTIONS,
+                                                     T_MAX as BBS100_T_MAX)
 from src.envs.mo_lunar_lander import (lunar_lander_batch_rollout, MOLunarLanderObj,
                                         NUM_STATES as LL_NUM_STATES,
                                         NUM_ACTIONS as LL_NUM_ACTIONS,
@@ -115,6 +137,12 @@ def make_obj(cfg: dict, env_meta: dict):
             return MCContObj(delta=delta, T_max=MCC_T_MAX)
         if env_meta["env_kind"] == "breakable_bottles":
             return BreakableBottlesObj(delta=delta, T_max=BB_T_MAX)
+        if env_meta["env_kind"] == "breakable_bottles_easy":
+            return BreakableBottlesEasyObj(delta=delta, T_max=BBE_T_MAX)
+        if env_meta["env_kind"] == "breakable_bottles_short":
+            return BreakableBottlesShortObj(delta=delta, T_max=BBS_T_MAX)
+        if env_meta["env_kind"] == "breakable_bottles_short_t100":
+            return BreakableBottlesShortT100Obj(delta=delta, T_max=BBS100_T_MAX)
         if env_meta["env_kind"] == "mo_lunar_lander":
             return MOLunarLanderObj(delta=delta, T_max=LL_T_MAX)
     raise ValueError(f"unknown obj_kind={obj_kind}")
@@ -184,6 +212,24 @@ def env_setup(cfg: dict, rng):
         meta = {"env_kind": "breakable_bottles", "t_max": BB_T_MAX}
         rollout_fn_factory = lambda pol: (lambda H_, B_:
             breakable_bottles_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "breakable_bottles_easy":
+        H = BBE_T_MAX
+        ns, na = BBE_NUM_STATES, BBE_NUM_ACTIONS
+        meta = {"env_kind": "breakable_bottles_easy", "t_max": BBE_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            breakable_bottles_easy_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "breakable_bottles_short":
+        H = BBS_T_MAX
+        ns, na = BBS_NUM_STATES, BBS_NUM_ACTIONS
+        meta = {"env_kind": "breakable_bottles_short", "t_max": BBS_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            breakable_bottles_short_batch_rollout({}, pol, H_, B_, rng))
+    elif cfg["env_kind"] == "breakable_bottles_short_t100":
+        H = BBS100_T_MAX
+        ns, na = BBS100_NUM_STATES, BBS100_NUM_ACTIONS
+        meta = {"env_kind": "breakable_bottles_short_t100", "t_max": BBS100_T_MAX}
+        rollout_fn_factory = lambda pol: (lambda H_, B_:
+            breakable_bottles_short_t100_batch_rollout({}, pol, H_, B_, rng))
     elif cfg["env_kind"] == "mo_lunar_lander":
         H = LL_T_MAX
         ns, na = LL_NUM_STATES, LL_NUM_ACTIONS
@@ -219,7 +265,7 @@ def derive_K(K_mlmc: int, N: int, B: int) -> tuple[int, int]:
 def make_configs(args) -> list:
     K_pg, K_rein = derive_K(args.K, args.N, args.B)
     out = []
-    for algo in ["ganesh_mlmc", "bai_pg", "reinforce", "scalarized_reinforce"]:
+    for algo in ["ganesh_mlmc", "bai_pg", "reinforce", "scalarized_reinforce", "linear_reinforce"]:
         if args.algos and algo not in args.algos:
             continue
         K_use = args.K if algo == "ganesh_mlmc" else (K_pg if algo == "bai_pg" else K_rein)
@@ -273,6 +319,13 @@ def run_one(cfg: dict) -> dict:
         algo_kwargs = kw
     elif cfg["algorithm"] == "scalarized_reinforce":
         algo_kwargs = {"N": B}
+    elif cfg["algorithm"] == "linear_reinforce":
+        # Probe one rollout to discover M (reward dimensionality), then build
+        # uniform weights w = (1/M, ..., 1/M).  Roijers et al. 2013 framework.
+        _, _, rr_probe = rollout_fn(H, 1)
+        M = rr_probe.shape[-1]
+        weights = np.full(M, 1.0 / M, dtype=np.float64)
+        algo_kwargs = {"N": B, "weights": weights}
     elif cfg["algorithm"] == "ganesh_mlmc":
         algo_kwargs = {"B_max": B, "B_inner": B,
                        "N_inner": N, "beta": cfg["beta"]}
@@ -300,7 +353,7 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--out_dir", required=True)
     p.add_argument("--tag", required=True)
-    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car", "cliff_walking", "dst_concave", "mo_mc_cont", "breakable_bottles", "mo_lunar_lander"], required=True)
+    p.add_argument("--env_kind", choices=["fruit_tree", "dst", "bonus_world", "resource", "dst_multi", "mo_mountain_car", "cliff_walking", "dst_concave", "mo_mc_cont", "breakable_bottles", "breakable_bottles_easy", "breakable_bottles_short", "breakable_bottles_short_t100", "mo_lunar_lander"], required=True)
     p.add_argument("--env", default="dst_open")
     p.add_argument("--depth", type=int, default=7)
     p.add_argument("--alpha", type=float, default=0.5)
@@ -340,21 +393,35 @@ def main() -> None:
     print(f"  {len(cfgs)} runs, {args.workers} workers")
     t0 = time.time()
     done = 0
-    with ProcessPoolExecutor(max_workers=args.workers) as ex:
-        futures = {ex.submit(run_one, c): c for c in cfgs}
-        for fut in as_completed(futures):
-            cfg = futures[fut]
+    if args.workers <= 1:
+        for cfg in cfgs:
             try:
-                res = fut.result()
+                res = run_one(cfg)
                 done += 1
                 elapsed = time.time() - t0
-                eta = elapsed / done * (len(cfgs) - done)
+                eta = elapsed / max(done, 1) * (len(cfgs) - done)
                 print(f"  [{done:3d}/{len(cfgs)}] {cfg['algorithm']:<22} "
                       f"K={cfg['K_use']:<5} seed={cfg['seed']} "
-                      f"{res['time']:6.1f}s (ETA {eta/60:5.1f} min)")
+                      f"{res['time']:6.1f}s (ETA {eta/60:5.1f} min)", flush=True)
             except Exception as e:
                 print(f"  FAILED {cfg['algorithm']} seed={cfg['seed']}: "
-                      f"{type(e).__name__}: {e}")
+                      f"{type(e).__name__}: {e}", flush=True)
+    else:
+        with ProcessPoolExecutor(max_workers=args.workers) as ex:
+            futures = {ex.submit(run_one, c): c for c in cfgs}
+            for fut in as_completed(futures):
+                cfg = futures[fut]
+                try:
+                    res = fut.result()
+                    done += 1
+                    elapsed = time.time() - t0
+                    eta = elapsed / done * (len(cfgs) - done)
+                    print(f"  [{done:3d}/{len(cfgs)}] {cfg['algorithm']:<22} "
+                          f"K={cfg['K_use']:<5} seed={cfg['seed']} "
+                          f"{res['time']:6.1f}s (ETA {eta/60:5.1f} min)", flush=True)
+                except Exception as e:
+                    print(f"  FAILED {cfg['algorithm']} seed={cfg['seed']}: "
+                          f"{type(e).__name__}: {e}", flush=True)
     print(f"v15 [{args.tag}] done in {(time.time() - t0)/60:.1f} min")
 
 

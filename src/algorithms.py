@@ -302,3 +302,58 @@ def scalarized_reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N):
     rtg_t = torch.as_tensor(rtg, dtype=policy.dtype, device=policy.device)
     omega = (scores * rtg_t.unsqueeze(-1)).sum(dim=(0, 1)) / N
     return omega.detach().cpu().numpy(), J_hat, N
+
+
+# -----------------------------------------------------------------------------
+# Linear-scalarization REINFORCE — classical MORL baseline
+# (Roijers, Vamplew, Whiteson, Dazeley 2013, "A Survey of Multi-Objective
+#  Sequential Decision-Making", JAIR vol. 48, pp. 67-113.)
+# -----------------------------------------------------------------------------
+
+def linear_reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, weights):
+    """One outer iteration of fixed-weight linear-scalarization REINFORCE.
+
+    Classical MORL baseline (Roijers et al. 2013): pick a fixed weight vector
+    w in the (M-1)-simplex, scalarize per-step rewards r_w(t) = w . r(t), and
+    run vanilla REINFORCE-with-reward-to-go on r_w(t). The weights do NOT
+    change during training; the algorithm optimizes the linear functional
+    w . J(theta), which equals f(J) only when f is itself linear.
+
+    This baseline encodes the strawman question: "Could a fixed-weight linear
+    scalarization (the standard MORL move) recover concave-fairness behavior
+    without any knowledge of f?" For non-linear f the answer is generally no.
+
+    Differences vs scalarized_reinforce_step (plug-in REINFORCE / Frank-Wolfe):
+      - weights are FIXED across all K outer iterations; not refreshed by
+        evaluating ∇f at the current Ĵ.
+      - The objective f is not used at all during training; it only enters
+        post-hoc as the scoring function for the resulting policy.
+      - Same per-iter trajectory cost N.
+
+    Args
+        weights: array-like length M, sums to 1 (the (M-1)-simplex).
+                 Default in the codebase: uniform 1/M.
+
+    Returns (omega numpy (d,), J_hat (M,), n_traj=N).
+    """
+    ss, aa, rr = rollout_fn(H, N)  # (N, H, M)
+    H_len = rr.shape[1]
+    gammas = gamma ** np.arange(H_len)
+
+    weights = np.asarray(weights, dtype=np.float64)
+    assert weights.shape[-1] == rr.shape[-1], (
+        f"weights length {weights.shape[-1]} != reward dim {rr.shape[-1]}")
+
+    # For logging only; algorithm does NOT use J_hat or grad_f.
+    discounted = rr * gammas[None, :, None]
+    J_hat = discounted.sum(axis=1).mean(axis=0)
+
+    # Per-step scalarized reward r_scalar(t) = w . r(t).
+    r_scalar = (rr * weights[None, None, :]).sum(axis=-1)  # (N, H)
+    r_scalar_disc = r_scalar * gammas[None, :]
+    rtg = np.ascontiguousarray(np.cumsum(r_scalar_disc[:, ::-1], axis=1)[:, ::-1])
+
+    scores = policy.scores(ss, aa)  # (N, H, d)
+    rtg_t = torch.as_tensor(rtg, dtype=policy.dtype, device=policy.device)
+    omega = (scores * rtg_t.unsqueeze(-1)).sum(dim=(0, 1)) / N
+    return omega.detach().cpu().numpy(), J_hat, N
