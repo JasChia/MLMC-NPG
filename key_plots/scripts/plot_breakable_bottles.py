@@ -67,7 +67,7 @@ def load_runs(B):
             "K":    K,
         }
         algo = m.group("algo")
-        proximity = abs(K - K_BUDGET_ITER) if algo == "ganesh_mlmc" else 0
+        proximity = abs(K - K_BUDGET_ITER) if algo == "mlmc_npg" else 0
         key = (algo, m.group("seed"))
         existing = by_seed[key].get("proximity", float("inf"))
         if proximity < existing or "payload" not in by_seed[key]:
@@ -86,7 +86,7 @@ def interp_runs(runs):
     count (averaged across MLMC seeds) so all algorithms share a single
     fair-budget horizontal axis, matching the original figure.
     """
-    mlmc_runs = runs.get("ganesh_mlmc", [])
+    mlmc_runs = runs.get("mlmc_npg", [])
     if not mlmc_runs:
         return {}
     cap = float(np.mean([
