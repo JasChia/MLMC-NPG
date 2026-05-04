@@ -1,7 +1,7 @@
-# MLMC-NPG — Figures Reproduction Kit
+# MLMC-NPG
 
 Reproduction code and data accompanying an anonymous submission on
-multi-level Monte Carlo natural policy gradient methods for concave
+multi-level Monte Carlo natural policy gradient method for concave
 multi-objective reinforcement learning. *Author and citation details are
 withheld for double-blind review.*
 

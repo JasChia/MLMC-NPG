@@ -152,7 +152,7 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
 
 
 # -----------------------------------------------------------------------------
-# REINFORCE baseline (prior-work eq. 38)
+# REINFORCE baseline (prior-work baseline)
 # -----------------------------------------------------------------------------
 
 def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=1e-3,

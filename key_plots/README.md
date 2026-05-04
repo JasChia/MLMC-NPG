@@ -1,4 +1,4 @@
-# key_plots — hyperparameters not shown in the figures
+# Paper plots — hyperparameters not shown in the figures
 
 ## Shared
 
@@ -8,7 +8,7 @@
 - Policy: NN-32 single hidden layer, tanh activation, softmax over actions
 - Matched total trajectory budget across algorithms:
   `K_pg = T / (2B)`, `K_rein = T / B`, with `T = K_mlmc · per_iter_traj_mlmc(B, N)`
-- 20 seeds per configuration; runs are GPU-accelerated
+- 20 seeds per configuration; runs can be Cuda GPU-accelerated
 - Each per-seed JSON contains the full f-curve, J-trajectory, and config
 
 ---
@@ -55,5 +55,4 @@ python plot_fruit_tree.py            # → ../fruit_tree_alpha_sweep.{tikz,png}
 python plot_breakable_bottles.py     # → ../breakable_bottles_b_sweep.{tikz,png}
 ```
 
-Requires `numpy`, `torch`, `matplotlib`. The plot scripts write `.tikz` directly
-without `tikzplotlib`.
+Requires `numpy`, `torch`, `matplotlib`.
