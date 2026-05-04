@@ -40,36 +40,83 @@ OUT  = HERE.parent / "breakable_bottles_b_sweep.tikz"
 
 N_GRID = 200
 
+# Trajectory-budget cap: each panel is shown out to MLMC-NPG's K_BUDGET_ITER
+# cumulative trajectory count (averaged across seeds). This matches the
+# original figure, which froze the comparison at K_mlmc=40 even when the raw
+# JSONs ran for more outer iterations (e.g. the K_mlmc=200 B=8 sweep).
+K_BUDGET_ITER = 40
+
 
 def load_runs(B):
-    """Return {algo: list of {f, traj}} for runs with the given B."""
-    runs = defaultdict(list)
+    """Return {algo: list of {f, traj}} for runs with the given B.
+
+    Prefers data with K_mlmc closest to K_BUDGET_ITER per (algo, seed) so that,
+    when both K_mlmc=40 and K_mlmc=200 runs exist for the same B, only one set
+    is used. Falls back to whatever's available otherwise.
+    """
+    by_seed = defaultdict(dict)  # (algo, seed) -> list of (K_proximity, payload)
     for fp in sorted(DATA.iterdir()):
         m = RUN_RE.match(fp.name)
         if not m or int(m.group("B")) != B or m.group("algo") not in ORDER:
             continue
         d = json.load(open(fp))
-        runs[m.group("algo")].append({
+        K = int(d.get("config", {}).get("K", len(d["f"])))
+        payload = {
             "f":    np.asarray(d["f"], float),
             "traj": np.asarray(d["trajectories"], int),
-        })
+            "K":    K,
+        }
+        algo = m.group("algo")
+        proximity = abs(K - K_BUDGET_ITER) if algo == "ganesh_mlmc" else 0
+        key = (algo, m.group("seed"))
+        existing = by_seed[key].get("proximity", float("inf"))
+        if proximity < existing or "payload" not in by_seed[key]:
+            by_seed[key] = {"proximity": proximity, "payload": payload, "algo": algo}
+
+    runs = defaultdict(list)
+    for entry in by_seed.values():
+        runs[entry["algo"]].append(entry["payload"])
     return runs
 
 
 def interp_runs(runs):
-    """Returns {algo: (grid, mean, std, n)}."""
+    """Returns {algo: (grid, mean, std, n)}.
+
+    Each curve is truncated at MLMC-NPG's K_BUDGET_ITER cumulative-trajectory
+    count (averaged across MLMC seeds) so all algorithms share a single
+    fair-budget horizontal axis, matching the original figure.
+    """
+    mlmc_runs = runs.get("ganesh_mlmc", [])
+    if not mlmc_runs:
+        return {}
+    cap = float(np.mean([
+        r["traj"][min(K_BUDGET_ITER - 1, len(r["traj"]) - 1)]
+        for r in mlmc_runs
+    ]))
+
     out = {}
     for algo in ORDER:
         rs = runs.get(algo, [])
         if not rs:
             continue
-        t_lo = max(r["traj"][0]  for r in rs)
-        t_hi = min(r["traj"][-1] for r in rs)
+        # Per-seed: keep only the part of the curve within the shared budget.
+        clipped = []
+        for r in rs:
+            mask = r["traj"] <= cap
+            if mask.sum() < 2:                 # need at least two points to interp
+                continue
+            clipped.append((r["traj"][mask], r["f"][mask]))
+        if not clipped:
+            continue
+        t_lo = max(t[0]  for t, _ in clipped)
+        t_hi = min(t[-1] for t, _ in clipped)
+        if t_lo >= t_hi:
+            continue
         grid   = np.linspace(t_lo, t_hi, N_GRID)
-        curves = np.stack([np.interp(grid, r["traj"], r["f"]) for r in rs])
+        curves = np.stack([np.interp(grid, t, y) for t, y in clipped])
         mean   = curves.mean(axis=0)
-        std    = curves.std(axis=0, ddof=1)
-        out[algo] = (grid, mean, std, len(rs))
+        std    = curves.std(axis=0, ddof=1) if len(curves) > 1 else np.zeros_like(mean)
+        out[algo] = (grid, mean, std, len(clipped))
     return out
 
 
