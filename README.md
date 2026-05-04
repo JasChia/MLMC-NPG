@@ -1,7 +1,7 @@
-# MLMC-NPG — Figures Reproduction Kit
+# MLMC-NPG
 
 Reproduction code and data accompanying an anonymous submission on
-multi-level Monte Carlo natural policy gradient methods for concave
+multi-level Monte Carlo natural policy gradient method for concave
 multi-objective reinforcement learning. *Author and citation details are
 withheld for double-blind review.*
 
@@ -16,7 +16,7 @@ multi-objective policy gradient).
 ```
 MLMC-NPG/
 ├── src/                              # Algorithm + environment library
-│   ├── algorithms.py                 # bai_pg_step, ganesh_mlmc_step, reinforce_step
+│   ├── algorithms.py                 # bai_pg_step, mlmc_npg_step, reinforce_step
 │   ├── train.py                      # Outer Adam ascent loop
 │   ├── envs/
 │   │   ├── fruit_tree.py             # Depth-7 binary tree (M=6)
@@ -133,7 +133,7 @@ the schema:
 
 ```json
 {
-  "algo":         "ganesh_mlmc",
+  "algo":         "mlmc_npg",
   "env":          "fruit_tree",
   "config":       { "B": 16, "N": 20, "K": 40, "alpha": 0.10, ... },
   "f":            [<float>, ...],          // scalarized objective at each iteration
@@ -154,7 +154,7 @@ Filename pattern (produced by `run_experiments.py`):
 
 | Code name      | Reference            | Description                                            |
 |----------------|----------------------|--------------------------------------------------------|
-| `ganesh_mlmc`  | this work, Alg. 2    | **MLMC-NPG**: multi-level MC gradient + NPG ascent     |
+| `mlmc_npg`     | this work, Alg. 2    | **MLMC-NPG**: multi-level MC gradient + NPG ascent     |
 | `bai_pg`       | prior work, Alg. 1   | **Policy Gradient**: biased plug-in estimator          |
 | `reinforce`    | prior work, eq. 38   | **REINFORCE**: per-step training-reward baseline       |
 

@@ -11,7 +11,7 @@ from typing import Callable, Dict, Any
 import numpy as np
 import torch
 
-from .algorithms import bai_pg_step, ganesh_mlmc_step, reinforce_step
+from .algorithms import bai_pg_step, mlmc_npg_step, reinforce_step
 
 
 class AdamAscent:
@@ -71,8 +71,8 @@ def train(
     for k in range(K):
         if algorithm == "bai_pg":
             omega, J_hat, ntraj = bai_pg_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
-        elif algorithm == "ganesh_mlmc":
-            omega, J_hat, ntraj = ganesh_mlmc_step(policy, rollout_fn, obj, gamma, H, rng=rng, **algo_kwargs)
+        elif algorithm == "mlmc_npg":
+            omega, J_hat, ntraj = mlmc_npg_step(policy, rollout_fn, obj, gamma, H, rng=rng, **algo_kwargs)
         elif algorithm == "reinforce":
             omega, J_hat, ntraj = reinforce_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
         else:

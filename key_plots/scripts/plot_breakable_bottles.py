@@ -15,14 +15,14 @@ import numpy as np
 
 
 LABEL = {
-    "ganesh_mlmc": "MLMC-NPG",
-    "bai_pg":      "Policy Gradient",
-    "reinforce":   "REINFORCE",
+    "mlmc_npg": "MLMC-NPG",
+    "bai_pg":   "Policy Gradient",
+    "reinforce": "REINFORCE",
 }
 TIKZ_COLOR = {
-    "ganesh_mlmc": "mediumpurple148103189",
-    "bai_pg":      "steelblue31119180",
-    "reinforce":   "crimson2143940",
+    "mlmc_npg": "mediumpurple148103189",
+    "bai_pg":   "steelblue31119180",
+    "reinforce": "crimson2143940",
 }
 ORDER = list(LABEL.keys())
 
@@ -30,7 +30,7 @@ ORDER = list(LABEL.keys())
 B_PANELS = [(4, "(a)"), (8, "(b)"), (16, "(c)")]
 
 RUN_RE = re.compile(
-    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce)_breakable_bottles_"
+    r"^(?P<algo>mlmc_npg|bai_pg|reinforce)_breakable_bottles_"
     r"\S*?_B(?P<B>\d+)_\S*_seed(?P<seed>\d+)\.json$"
 )
 
@@ -293,7 +293,7 @@ def main():
     matplotlib.use("Agg")
     import matplotlib.pyplot as plt
 
-    png_color = {"ganesh_mlmc": "tab:purple", "bai_pg": "tab:blue", "reinforce": "tab:red"}
+    png_color = {"mlmc_npg": "tab:purple", "bai_pg": "tab:blue", "reinforce": "tab:red"}
     png_out   = HERE.parent / "breakable_bottles_b_sweep.png"
 
     fig, axes = plt.subplots(1, 3, figsize=(18, 5))

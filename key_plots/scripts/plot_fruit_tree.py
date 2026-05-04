@@ -1,6 +1,6 @@
 """Generate fruit_tree_alpha_sweep.tikz directly (no tikzplotlib dependency).
 
-Produces a 2x2 pgfplots groupplot with reinforce/ganesh_mlmc/bai_pg data.
+Produces a 2x2 pgfplots groupplot with reinforce/mlmc_npg/bai_pg data.
 Run from anywhere; uses paths resolved relative to this file.
 """
 import json, re
@@ -8,22 +8,22 @@ from collections import defaultdict
 from pathlib import Path
 import numpy as np
 
-LABEL = {"ganesh_mlmc": "MLMC-NPG", "bai_pg": "Policy Gradient",
+LABEL = {"mlmc_npg": "MLMC-NPG", "bai_pg": "Policy Gradient",
          "reinforce": "REINFORCE"}
 
 # Tab:purple / tab:blue / tab:red in RGB
 COLOR_RGB = {
-    "ganesh_mlmc": (148, 103, 189),   # mediumpurple
-    "bai_pg":      ( 31, 119, 180),   # steelblue
-    "reinforce":   (214,  39,  40),   # crimson/tab:red
+    "mlmc_npg": (148, 103, 189),   # mediumpurple
+    "bai_pg":   ( 31, 119, 180),   # steelblue
+    "reinforce": (214,  39,  40),  # crimson/tab:red
 }
 COLOR_NAME = {k: f"{''.join(str(v) for v in rgb)}" for k, rgb in COLOR_RGB.items()}
-# e.g. COLOR_NAME["ganesh_mlmc"] = "1481031892"  -- but we want the actual tikz color names
+# e.g. COLOR_NAME["mlmc_npg"] = "1481031892"  -- but we want the actual tikz color names
 # Use descriptive names matching tikzplotlib convention
 TIKZ_COLOR = {
-    "ganesh_mlmc": "mediumpurple148103189",
-    "bai_pg":      "steelblue31119180",
-    "reinforce":   "crimson2143940",
+    "mlmc_npg": "mediumpurple148103189",
+    "bai_pg":   "steelblue31119180",
+    "reinforce": "crimson2143940",
 }
 
 ORDER = list(LABEL.keys())
@@ -32,7 +32,7 @@ ALPHAS = [("a010", "0.10"), ("a025", "0.25"), ("a050", "0.50"), ("a100", "1.00")
 PANELS = ["(a)", "(b)", "(c)", "(d)"]
 
 RUN_RE = re.compile(
-    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce)"
+    r"^(?P<algo>mlmc_npg|bai_pg|reinforce)"
     r"_fruit_tree_(?P<atag>a\d+)_\S*_seed(?P<seed>\d+)\.json$"
 )
 
@@ -211,7 +211,7 @@ import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
 
-PNG_COLOR = {"ganesh_mlmc": "tab:purple", "bai_pg": "tab:blue", "reinforce": "tab:red"}
+PNG_COLOR = {"mlmc_npg": "tab:purple", "bai_pg": "tab:blue", "reinforce": "tab:red"}
 PNG_OUT   = HERE.parent / "fruit_tree_alpha_sweep.png"
 
 fig, axes = plt.subplots(2, 2, figsize=(14, 10))
