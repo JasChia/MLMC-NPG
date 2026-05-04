@@ -51,7 +51,7 @@ BB_DATA = ROOT / "key_plots" / "data" / "breakable_bottles"
 
 FT_ALPHAS = [(0.10, "a010"), (0.25, "a025"), (0.50, "a050"), (1.00, "a100")]
 BB_BS     = [4, 8, 16]
-ALGORITHMS = ["ganesh_mlmc", "bai_pg", "reinforce"]
+ALGORITHMS = ["mlmc_npg", "bai_pg", "reinforce"]
 
 
 @dataclass
@@ -82,7 +82,7 @@ class ExperimentConfig:
         # as in the published runs).
         per_iter_mlmc = self.B + self.N * self.B
         T = self.K_mlmc * per_iter_mlmc
-        if self.algo == "ganesh_mlmc":
+        if self.algo == "mlmc_npg":
             self.K = self.K_mlmc
         elif self.algo == "bai_pg":
             self.K = max(1, T // (2 * self.B))
@@ -142,7 +142,7 @@ def setup_env_policy_obj(cfg: ExperimentConfig):
 
 
 def algo_kwargs(cfg: ExperimentConfig) -> dict:
-    if cfg.algo == "ganesh_mlmc":
+    if cfg.algo == "mlmc_npg":
         return {"B_max": cfg.B, "B_inner": cfg.B, "N_inner": cfg.N, "beta": cfg.beta}
     if cfg.algo == "bai_pg":
         return {"N1": cfg.B, "N2": cfg.B}

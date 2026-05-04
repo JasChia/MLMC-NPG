@@ -1,7 +1,7 @@
 """Three concave-MORL algorithm steps on a shared rollout/policy/objective interface.
 
 bai_pg_step       — Vanilla PG with biased plug-in estimator (prior-work baseline, Alg. 1).
-ganesh_mlmc_step  — MLMC-NPG (this work, Algorithm 2): no 2nd-order smoothness required.
+mlmc_npg_step     — MLMC-NPG (this work, Algorithm 2): no 2nd-order smoothness required.
 reinforce_step    — REINFORCE baseline (prior-work eq. 38) with per-step training reward.
 
 Each function signature:
@@ -112,7 +112,7 @@ def bai_pg_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N1, N2):
 # MLMC-NPG (this work, Algorithm 2)
 # -----------------------------------------------------------------------------
 
-def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
+def mlmc_npg_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
                      B_max, B_inner, N_inner, beta, rng: np.random.Generator):
     """One outer iteration of MLMC-NPG (Algorithm 2).
 
