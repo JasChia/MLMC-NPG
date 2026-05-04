@@ -1,7 +1,7 @@
 """Generate ft_alpha_sweep_3algo.tikz directly (no tikzplotlib dependency).
 
 Produces a 2x2 pgfplots groupplot with reinforce/ganesh_mlmc/bai_pg data.
-Run from anywhere; uses absolute paths relative to this file.
+Run from anywhere; uses paths resolved relative to this file.
 """
 import json, re
 from collections import defaultdict
@@ -32,7 +32,7 @@ ALPHAS = [("a010", "0.10"), ("a025", "0.25"), ("a050", "0.50"), ("a100", "1.00")
 PANELS = ["(a)", "(b)", "(c)", "(d)"]
 
 RUN_RE = re.compile(
-    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce|scalarized_reinforce|linear_reinforce)"
+    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce)"
     r"_fruit_tree_(?P<atag>a\d+)_d7_nn32_B16_N20_K(?P<K>\d+)_beta\S+_lr\S+"
     r"_v15_ft_nn32_B16_NK40_(?P<atag2>a\d+)_seed(?P<seed>\d+)\.json$"
 )

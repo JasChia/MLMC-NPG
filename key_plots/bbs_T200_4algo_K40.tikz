@@ -1859,7 +1859,7 @@ table {%
 6495.23618090452 16.4407357239903
 6528 16.4407357239903
 };
-\addlegendentry{REINFORCE (paper A) (n=20)}
+\addlegendentry{REINFORCE (n=20)}
 \end{axis}
 
 \end{tikzpicture}

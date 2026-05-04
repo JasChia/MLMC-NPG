@@ -1,17 +1,18 @@
 """Regenerate bbs_T200_4algo_K40 plot.
 
-Reads raw JSONs from ../data/bb_short/  (run from figures/key_plots/scripts/).
-Each file is a K=200 BB-short run; we truncate to MLMC's K=40 cumulative-trajectory
-budget for a "K=40" comparison. Writes PNG and .tikz to ../.
+Reads raw JSONs from ../data/bb_short/ (run from this script's directory).
+Each file is a K=200 BB-short run; the curve is truncated to MLMC-NPG's K=40
+cumulative-trajectory budget so all algorithms share the same horizontal axis.
+Writes PNG and .tikz to ../.
 """
-import json, os
+import json
 from pathlib import Path
 import numpy as np
 import matplotlib.pyplot as plt
 import tikzplotlib
 
 LABEL = {"ganesh_mlmc": "MLMC-NPG", "bai_pg": "Policy Gradient",
-         "reinforce": "REINFORCE (paper A)"}
+         "reinforce": "REINFORCE"}
 COLOR = {"ganesh_mlmc": "tab:purple", "bai_pg": "tab:blue",
          "reinforce": "tab:red"}
 ORDER = list(LABEL.keys())

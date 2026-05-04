@@ -1,14 +1,11 @@
-"""Breakable Bottles — easier variant B: lower break + longer episode + shorter corridor.
+"""Breakable Bottles (short variant): T=200 episode, 3 cells, lower break probability.
 
-Identical to src.envs.breakable_bottles except:
-  Mod #1: BREAK_PROB_PER_MOVE: 0.05 -> 0.01
-  Mod #3: NUM_CELLS:           5    -> 3 (only 1 transit cell between source and home)
-  Mod #6: T_MAX:               60   -> 200
+Source (cell 0), middle (cell 1), home (cell 2). Agent picks up bottles at the
+source, walks to home, and delivers. Each move on a bottled state may break
+the bottle with probability BREAK_PROB_PER_MOVE.
 
-3 cells means: source (cell 0), middle (cell 1), home (cell 2).
-Per-attempt successful walks: 0.99^2 = 0.9801 (vs 0.95^4 = 0.8145 in original).
-
-Same M=3 channels, 3 actions.
+M=3 reward channels: water delivery (+1 on drop-off), bottle breakage (-1 on
+shatter), and time (-1 per active step). Episodes terminate at T_MAX = 200.
 """
 from __future__ import annotations
 

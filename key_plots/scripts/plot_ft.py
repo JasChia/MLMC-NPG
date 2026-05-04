@@ -1,7 +1,7 @@
 """Regenerate the four ft_nn32_B16_NK40_a*_fair_budget plots.
 
-Reads raw JSONs from ../data/fruit_tree/  (run from figures/key_plots/scripts/).
-Writes PNGs and .tikz to ../  (i.e. figures/key_plots/).
+Reads raw JSONs from ../data/fruit_tree/ (run from this script's directory).
+Writes PNGs and .tikz to ../ (i.e. key_plots/).
 """
 import json, re, csv
 from collections import defaultdict
@@ -18,7 +18,7 @@ COLOR = {"ganesh_mlmc": "tab:purple", "bai_pg": "tab:blue",
 ORDER = list(LABEL.keys())
 
 RUN_RE = re.compile(
-    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce|scalarized_reinforce|linear_reinforce)_fruit_tree_"
+    r"^(?P<algo>ganesh_mlmc|bai_pg|reinforce)_fruit_tree_"
     r"(?P<atag>a\d+)_d7_nn32_B16_N20_K(?P<K>\d+)_beta\S+_lr\S+_v15_ft_nn32_B16_NK40_"
     r"(?P<atag2>a\d+)_seed(?P<seed>\d+)\.json$"
 )

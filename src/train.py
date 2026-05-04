@@ -1,8 +1,8 @@
 """Outer training loop + Adam updater for the three algorithms.
 
 Adam is applied to the computed ascent direction omega, not to a conventional
-loss gradient: we treat omega as the "gradient of f w.r.t. theta" and take
-an ascent step. This matches Paper A's simulation setup (they use Adam as well).
+loss gradient: omega is treated as the "gradient of f w.r.t. theta" and an
+ascent step is taken.
 """
 from __future__ import annotations
 
@@ -11,9 +11,7 @@ from typing import Callable, Dict, Any
 import numpy as np
 import torch
 
-from .algorithms import (bai_pg_step, ganesh_mlmc_step,
-                          reinforce_step, scalarized_reinforce_step,
-                          linear_reinforce_step)
+from .algorithms import bai_pg_step, ganesh_mlmc_step, reinforce_step
 
 
 class AdamAscent:
@@ -77,10 +75,6 @@ def train(
             omega, J_hat, ntraj = ganesh_mlmc_step(policy, rollout_fn, obj, gamma, H, rng=rng, **algo_kwargs)
         elif algorithm == "reinforce":
             omega, J_hat, ntraj = reinforce_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
-        elif algorithm == "scalarized_reinforce":
-            omega, J_hat, ntraj = scalarized_reinforce_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
-        elif algorithm == "linear_reinforce":
-            omega, J_hat, ntraj = linear_reinforce_step(policy, rollout_fn, obj, gamma, H, **algo_kwargs)
         else:
             raise ValueError(f"Unknown algorithm: {algorithm}")
 

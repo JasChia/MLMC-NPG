@@ -7,8 +7,5 @@
     policy.scores(states, actions)   -> torch.Tensor (..., d)
 
 Submodules:
-    log_linear  LogLinearPolicy / TabularPolicy / NNPolicy for the M-queue server
-                (Paper A — state is a length-M queue-length vector).
-    tabular     TabularGridPolicy for finite (state-index, action) MDPs (DST family).
-    nn_state    NNStatePolicy: MLP over one-hot state index (DST family / Fruit Tree).
+    nn_state    NNStatePolicy: MLP over one-hot state index.
 """
