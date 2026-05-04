@@ -1,3 +1,0 @@
-# Smoke test NN policy on Fruit Tree
-fruit_tree, nn, 32, ganesh_mlmc, 4, 10, ref
-fruit_tree, nn, 32, bai_pg, 4, 10, ref

@@ -1,5 +1,0 @@
-ft_nn32_B16_NK20_a100: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
-  MLMC: n=3 mean=12.369 sd=0.145
-  vs bai_pg                 n=3 mean= 12.109 sd= 0.368  M-X= +0.260  p=0.7000
-  vs reinforce              n=3 mean= 11.585 sd= 0.267  M-X= +0.785  p=0.1000
-  vs scalarized_reinforce   n=3 mean= 12.093 sd= 0.381  M-X= +0.276  p=0.7000

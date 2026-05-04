@@ -1,5 +1,0 @@
-dst_open_d2: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
-  MLMC: n=3 mean=8.766 sd=0.255
-  vs bai_pg                 n=3 mean=  8.873 sd= 0.000  M-X= -0.108  p=0.7000
-  vs reinforce              n=3 mean=  8.927 sd= 0.126  M-X= -0.162  p=0.4000
-  vs scalarized_reinforce   n=3 mean=  8.873 sd= 0.000  M-X= -0.108  p=0.7000

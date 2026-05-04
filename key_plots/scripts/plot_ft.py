@@ -12,9 +12,9 @@ from scipy import stats
 import tikzplotlib
 
 LABEL = {"ganesh_mlmc": "MLMC-NPG", "bai_pg": "Policy Gradient",
-         "linear_reinforce": "REINFORCE (linear scalarization)"}
+         "reinforce": "REINFORCE"}
 COLOR = {"ganesh_mlmc": "tab:purple", "bai_pg": "tab:blue",
-         "linear_reinforce": "tab:red"}
+         "reinforce": "tab:red"}
 ORDER = list(LABEL.keys())
 
 RUN_RE = re.compile(

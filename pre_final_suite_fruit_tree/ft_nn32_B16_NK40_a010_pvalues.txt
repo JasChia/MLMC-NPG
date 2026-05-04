@@ -1,5 +1,0 @@
-a010: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
-  MLMC: n=20 mean=43.267 sd=2.008
-  vs bai_pg                 n=20 mean= 40.833 sd= 2.002  M-X= +2.434  p=0.0001
-  vs linear_reinforce       n=20 mean= 40.663 sd= 2.142  M-X= +2.604  p=0.0004
-  vs scalarized_reinforce   n=20 mean= 40.610 sd= 2.460  M-X= +2.656  p=0.0009

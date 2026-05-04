@@ -10,6 +10,7 @@ __pycache__/
 venv/
 env/
 ENV/
+_plot_venv/
 
 # OS
 .DS_Store
@@ -21,7 +22,8 @@ Thumbs.db
 *.swp
 
 # Project-specific
+legacy/
 results/
 figures/
-.claude/scheduled_tasks.lock
+.claude/
 *.egg-info/

@@ -1,5 +1,0 @@
-mc_nn32_B4_K60_gpu: MLMC-NPG vs alternatives (final f, MWU exact two-sided)
-  MLMC: n=5 mean=23.904 sd=4.479
-  vs bai_pg                 n=5 mean= 25.077 sd= 6.607  M-X= -1.173  p=0.6905
-  vs reinforce              n=5 mean= 17.307 sd= 0.000  M-X= +6.597  p=0.0556
-  vs scalarized_reinforce   n=5 mean= 25.032 sd= 4.539  M-X= -1.128  p=0.6905

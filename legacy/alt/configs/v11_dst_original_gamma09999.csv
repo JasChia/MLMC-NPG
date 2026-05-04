@@ -1,8 +1,0 @@
-# Original DST only, tabular fair-budget configs rerun with gamma=0.9999.
-#
-# env, policy, hidden, algo, N, K, mode
-dst_original, tabular, , ganesh_mlmc, 4, 300,  ref
-dst_original, tabular, , bai_pg,      4, 1000, moreK
-dst_original, tabular, , bai_pg,     13, 300,  largerN
-dst_original, tabular, , reinforce,   4, 2000, moreK
-dst_original, tabular, , reinforce,  26, 300,  largerN
