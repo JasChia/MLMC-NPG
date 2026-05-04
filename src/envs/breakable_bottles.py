@@ -1,8 +1,8 @@
-"""Breakable Bottles (short variant): T=200 episode, 3 cells, lower break probability.
+"""Breakable Bottles environment: T=200 episode, 3 cells, M=3 reward channels.
 
 Source (cell 0), middle (cell 1), home (cell 2). Agent picks up bottles at the
-source, walks to home, and delivers. Each move on a bottled state may break
-the bottle with probability BREAK_PROB_PER_MOVE.
+source, walks to home, and delivers. Each move while carrying a bottle may
+break it with probability BREAK_PROB_PER_MOVE.
 
 M=3 reward channels: water delivery (+1 on drop-off), bottle breakage (-1 on
 shatter), and time (-1 per active step). Episodes terminate at T_MAX = 200.
@@ -27,8 +27,8 @@ def _state_idx(cell: np.ndarray, bottle: np.ndarray) -> np.ndarray:
     return cell * NUM_BOTTLE_STATES + bottle
 
 
-def breakable_bottles_short_batch_rollout(env_config: dict, policy, H: int, B: int,
-                                            rng: np.random.Generator):
+def breakable_bottles_batch_rollout(env_config: dict, policy, H: int, B: int,
+                                     rng: np.random.Generator):
     states = np.zeros((B, H), dtype=np.int64)
     actions = np.zeros((B, H), dtype=np.int64)
     rewards = np.zeros((B, H, M_REWARD), dtype=np.float32)
@@ -89,7 +89,7 @@ def breakable_bottles_short_batch_rollout(env_config: dict, policy, H: int, B: i
     return states, actions, rewards
 
 
-class BreakableBottlesShortObj:
+class BreakableBottlesObj:
     def __init__(self, delta: float = 0.5, T_max: int = T_MAX):
         self.delta = float(delta)
         self.T_max = float(T_max)
