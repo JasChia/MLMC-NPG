@@ -1,13 +1,8 @@
 """Three concave-MORL algorithm steps on a shared rollout/policy/objective interface.
 
-References
-    Bai, Bedi, Aggarwal et al., "Joint Optimization of Concave Scalarized
-    Multi-Objective Reinforcement Learning with Policy Gradient Based
-    Algorithm", JAIR (doi:10.1613/jair.1.13981).
-
-bai_pg_step       — Vanilla PG with biased plug-in estimator (Bai et al., Alg. 1).
+bai_pg_step       — Vanilla PG with biased plug-in estimator (prior-work baseline, Alg. 1).
 ganesh_mlmc_step  — MLMC-NPG (this work, Algorithm 2): no 2nd-order smoothness required.
-reinforce_step    — REINFORCE baseline (Bai et al., eq. 38) with per-step training reward.
+reinforce_step    — REINFORCE baseline (prior-work eq. 38) with per-step training reward.
 
 Each function signature:
     (policy, rollout_fn, obj, gamma, H, <hyperparams>) -> (omega, J_hat, n_traj)
@@ -94,7 +89,7 @@ def _solve_inner_npg(policy, rollout_fn, grad_f, gamma, H, B2, N_inner, beta):
 
 
 # -----------------------------------------------------------------------------
-# Vanilla PG with biased plug-in estimator (Bai et al., Algorithm 1)
+# Vanilla PG with biased plug-in estimator (prior-work baseline, Algorithm 1)
 # -----------------------------------------------------------------------------
 
 def bai_pg_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N1, N2):
@@ -157,7 +152,7 @@ def ganesh_mlmc_step(policy, rollout_fn: RolloutFn, obj, gamma, H,
 
 
 # -----------------------------------------------------------------------------
-# REINFORCE baseline (Bai et al., eq. 38)
+# REINFORCE baseline (prior-work eq. 38)
 # -----------------------------------------------------------------------------
 
 def reinforce_step(policy, rollout_fn: RolloutFn, obj, gamma, H, N, delta_guard=1e-3,

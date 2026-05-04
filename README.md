@@ -1,16 +1,13 @@
 # MLMC-NPG — Figures Reproduction Kit
 
-Reproduction code and data for the key figures in:
+Reproduction code and data accompanying an anonymous submission on
+multi-level Monte Carlo natural policy gradient methods for concave
+multi-objective reinforcement learning. *Author and citation details are
+withheld for double-blind review.*
 
-> **Breaking the Bias Barrier in Concave Multi-Objective Reinforcement Learning.**
-> [arXiv:2603.08518](https://doi.org/10.48550/arXiv.2603.08518)
-
-The Policy Gradient and REINFORCE baselines are taken from:
-
-> Bai, Bedi, Aggarwal et al. **Joint Optimization of Concave Scalarized
-> Multi-Objective Reinforcement Learning with Policy Gradient Based Algorithm.**
-> *Journal of Artificial Intelligence Research.*
-> [doi:10.1613/jair.1.13981](https://doi.org/10.1613/jair.1.13981)
+The Policy Gradient and REINFORCE baselines follow the prior work cited
+in the submission (a published JAIR article on concave-scalarized
+multi-objective policy gradient).
 
 ---
 
@@ -155,11 +152,11 @@ Filename pattern (produced by `run_experiments.py`):
 
 ## Algorithm Reference
 
-| Code name      | Reference          | Description                                            |
-|----------------|--------------------|--------------------------------------------------------|
-| `ganesh_mlmc`  | this work, Alg. 2  | **MLMC-NPG**: multi-level MC gradient + NPG ascent     |
-| `bai_pg`       | Bai et al., Alg. 1 | **Policy Gradient**: biased plug-in estimator          |
-| `reinforce`    | Bai et al., eq. 38 | **REINFORCE**: per-step training-reward baseline       |
+| Code name      | Reference            | Description                                            |
+|----------------|----------------------|--------------------------------------------------------|
+| `ganesh_mlmc`  | this work, Alg. 2    | **MLMC-NPG**: multi-level MC gradient + NPG ascent     |
+| `bai_pg`       | prior work, Alg. 1   | **Policy Gradient**: biased plug-in estimator          |
+| `reinforce`    | prior work, eq. 38   | **REINFORCE**: per-step training-reward baseline       |
 
 ### Shared hyperparameters
 
