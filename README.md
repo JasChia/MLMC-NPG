@@ -5,7 +5,7 @@ multi-level Monte Carlo natural policy gradient method for concave
 multi-objective reinforcement learning. *Author and citation details are
 withheld for double-blind review.*
 
-The Policy Gradient and REINFORCE baselines follow the prior work ["Joint Optimization of Concave Scalarized Multi-ObjectiveReinforcement Learning with Policy Gradient BasedAlgorithm"](https://doi.org/10.1613/jair.1.13981) from Bai et al. 2022.
+The Policy Gradient and REINFORCE baselines follow the prior work ["Joint Optimization of Concave Scalarized Multi-Objective Reinforcement Learning with Policy Gradient Based Algorithm"](https://doi.org/10.1613/jair.1.13981) from Bai et al. 2022.
 
 ---
 
