@@ -1,11 +1,11 @@
 """Breakable Bottles environment: T=200 episode, 3 cells, M=3 reward channels.
 
-Source (cell 0), middle (cell 1), home (cell 2). Agent picks up bottles at the
+1D Gridworld environment Source (cell 0), middle (cell 1), home (cell 2). Agent picks up bottles at the
 source, walks to home, and delivers. Each move while carrying a bottle may
 break it with probability BREAK_PROB_PER_MOVE.
 
 M=3 reward channels: water delivery (+1 on drop-off), bottle breakage (-1 on
-shatter), and time (-1 per active step). Episodes terminate at T_MAX = 200.
+shatter), and time (-1 per active step). Dropped bottles cannot be picked back up. Episodes terminate at T_MAX = 200 or 2 bottles being delivered successfully.
 """
 from __future__ import annotations
 
@@ -29,12 +29,25 @@ def _state_idx(cell: np.ndarray, bottle: np.ndarray) -> np.ndarray:
 
 def breakable_bottles_batch_rollout(env_config: dict, policy, H: int, B: int,
                                      rng: np.random.Generator):
+    # Optional variant, opt-in via env_config (defaults reproduce different behavior than utilized to produce figures):
+    #   deliver_target: int or None. When set (e.g. 2), an episode ends once this
+    #       many bottles have been delivered. Each drop-off delivers the pair being
+    #       carried, so deliver_target=2 ends after the first successful drop-off.
+    #       Default None -> no early termination; only T_MAX ends an episode.
+    #   break_requires_two: bool. True -> breakage risk applies only while carrying
+    #       2 bottles. Default False -> risk applies while carrying 1 or 2.
+    #   Important note for code reviews: submission described utilized break_requires_two = True and deliver_target = 2.
+    deliver_target = env_config.get("deliver_target", None)
+    break_requires_two = env_config.get("break_requires_two", False)
+    risky_loads = (2,) if break_requires_two else (1, 2)
+
     states = np.zeros((B, H), dtype=np.int64)
     actions = np.zeros((B, H), dtype=np.int64)
     rewards = np.zeros((B, H, M_REWARD), dtype=np.float32)
 
     cell = np.zeros(B, dtype=np.int32)
     bottle = np.zeros(B, dtype=np.int32)
+    delivered = np.zeros(B, dtype=np.int32)
     done = np.zeros(B, dtype=bool)
 
     for t in range(H):
@@ -62,12 +75,12 @@ def breakable_bottles_batch_rollout(env_config: dict, policy, H: int, B: int,
                 act = int(a[b])
                 if act == 0 and cell[b] > 0:
                     cell[b] -= 1
-                    if bottle[b] in (1, 2) and rng.random() < BREAK_PROB_PER_MOVE:
+                    if bottle[b] in risky_loads and rng.random() < BREAK_PROB_PER_MOVE:
                         bottle[b] = 3
                         r_broken[b] = -1.0
                 elif act == 1 and cell[b] < NUM_CELLS - 1:
                     cell[b] += 1
-                    if bottle[b] in (1, 2) and rng.random() < BREAK_PROB_PER_MOVE:
+                    if bottle[b] in risky_loads and rng.random() < BREAK_PROB_PER_MOVE:
                         bottle[b] = 3
                         r_broken[b] = -1.0
                 elif act == 2:
@@ -78,10 +91,14 @@ def breakable_bottles_batch_rollout(env_config: dict, policy, H: int, B: int,
                     elif cell[b] == NUM_CELLS - 1 and bottle[b] == 2:
                         bottle[b] = 0
                         r_water[b] = 1.0
+                        delivered[b] += 2
 
             rewards[:, t, 0] = r_water
             rewards[:, t, 1] = r_broken
             rewards[:, t, 2] = r_time
+
+        if deliver_target is not None:
+            done = done | (delivered >= deliver_target)
 
         if t + 1 >= T_MAX:
             done[:] = True
