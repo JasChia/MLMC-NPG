@@ -129,7 +129,9 @@ def setup_env_policy_obj(cfg: ExperimentConfig):
         policy = NNStatePolicy(num_states=BB_NUM_STATES, num_actions=BB_NUM_ACTIONS,
                                 hidden=(cfg.hidden,), device=device)
         obj = BreakableBottlesObj(delta=cfg.delta, T_max=BB_T_MAX)
-        env_config = {}
+        # Match the paper: episode ends once 2 bottles are delivered, and
+        # breakage risk applies only while carrying two bottles.
+        env_config = {"deliver_target": 2, "break_requires_two": True}
         H = BB_T_MAX
         gamma = 0.9999
 

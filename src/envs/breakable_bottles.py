@@ -1,10 +1,10 @@
 """Breakable Bottles environment: T=200 episode, 3 cells, M=3 reward channels.
 
 1D Gridworld environment Source (cell 0), middle (cell 1), home (cell 2). Agent picks up bottles at the
-source, walks to home, and delivers. Each move while carrying a bottle may
-break it with probability BREAK_PROB_PER_MOVE.
+source, walks to home, and delivers. While carrying two bottles, each move may
+break them with probability BREAK_PROB_PER_MOVE.
 
-M=3 reward channels: water delivery (+1 on drop-off), bottle breakage (-1 on
+M=3 reward channels: bottle delivery (+1 on drop-off), bottle breakage (-1 on
 shatter), and time (-1 per active step). Dropped bottles cannot be picked back up. Episodes terminate at T_MAX = 200 or 2 bottles being delivered successfully.
 """
 from __future__ import annotations
@@ -29,16 +29,15 @@ def _state_idx(cell: np.ndarray, bottle: np.ndarray) -> np.ndarray:
 
 def breakable_bottles_batch_rollout(env_config: dict, policy, H: int, B: int,
                                      rng: np.random.Generator):
-    # Optional variant, opt-in via env_config (defaults reproduce different behavior than utilized to produce figures):
-    #   deliver_target: int or None. When set (e.g. 2), an episode ends once this
-    #       many bottles have been delivered. Each drop-off delivers the pair being
-    #       carried, so deliver_target=2 ends after the first successful drop-off.
-    #       Default None -> no early termination; only T_MAX ends an episode.
-    #   break_requires_two: bool. True -> breakage risk applies only while carrying
-    #       2 bottles. Default False -> risk applies while carrying 1 or 2.
-    #   Important note for code reviews: submission described utilized break_requires_two = True and deliver_target = 2.
-    deliver_target = env_config.get("deliver_target", None)
-    break_requires_two = env_config.get("break_requires_two", False)
+    # Defaults match the environment as described in the paper:
+    #   deliver_target: int. An episode ends once this many bottles have been
+    #       delivered. Each drop-off delivers the pair being carried, so
+    #       deliver_target=2 ends after the first successful drop-off.
+    #       Set to None to disable early termination (only T_MAX ends an episode).
+    #   break_requires_two: bool. True (default) -> breakage risk applies only
+    #       while carrying 2 bottles. False -> risk applies while carrying 1 or 2.
+    deliver_target = env_config.get("deliver_target", 2)
+    break_requires_two = env_config.get("break_requires_two", True)
     risky_loads = (2,) if break_requires_two else (1, 2)
 
     states = np.zeros((B, H), dtype=np.int64)
