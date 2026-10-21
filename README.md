@@ -1,9 +1,8 @@
 # MLMC-NPG
 
-Reproduction code and data accompanying an anonymous submission on
+Reproduction code and data accompanying Breaking the Bias Barrier in Concave Multi-Objective Reinforcement Learning by Swetha Ganesh, Jason Chia, Vaneet Aggarwal accepted to Neurips 2026 on
 multi-level Monte Carlo natural policy gradient method for concave
-multi-objective reinforcement learning. *Author and citation details are
-withheld for double-blind review.*
+multi-objective reinforcement learning.
 
 The Policy Gradient and REINFORCE baselines follow the prior work ["Joint Optimization of Concave Scalarized Multi-Objective Reinforcement Learning with Policy Gradient Based Algorithm"](https://doi.org/10.1613/jair.1.13981) from Bai et al. 2022.
 
